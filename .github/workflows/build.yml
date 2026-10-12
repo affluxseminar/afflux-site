@@ -1,6 +1,6 @@
 # Builds the static site from the public CONTENT repository and deploys it together with the
 # application server from THIS repository (code, owner only). The content repository holds no
-# credential and cannot reach this one: this workflow polls it (every 10 minutes) and deploys when
+# credential and cannot reach this one: this workflow polls it (hourly) and deploys when
 # the live site's content-version differs from the repository's latest commit, or on a push here,
 # or on demand. The live site itself is the record of what is deployed — not a cache.
 #
@@ -14,7 +14,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
 permissions:
   contents: read
@@ -36,7 +36,12 @@ jobs:
       - id: cmp
         run: |
           live=$(curl -sf --max-time 15 "${{ vars.SITE_URL }}/content-version.txt" | tr -d '[:space:]' || true)
-          if [ "${{ github.event_name }}" != "schedule" ] || [ "$live" != "${{ steps.sha.outputs.sha }}" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
+          # A scheduled run deploys only when the live site answers with a different content version;
+          # while the site is not up yet (or unreachable) the schedule does nothing — the first deploy
+          # comes from a push or "Run workflow". Pushes and manual runs always build.
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$live" ] && [ "$live" != "${{ steps.sha.outputs.sha }}" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"
+          else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
 
   test:
     needs: content

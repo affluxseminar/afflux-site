@@ -29,7 +29,7 @@ without VPN; where it says "from abroad", any non-Russian network or a foreign S
 
 ## Programme editor
 - [ ] Admin → Programme → New talk: publish a test talk with a photo and a PDF; the commit appears in
-      the content repository under the token's name; the talk is on the site within 10–15 minutes
+      the content repository under the token's name; the talk is on the site within the hour (sooner after a manual "Run workflow")
       with the photo and the slides link; the Join button shows because a Zoom link was entered.
 - [ ] Edit it: change the title, leave the Zoom field empty → the stored link survives (Join still
       works); tick "Remove the stored Zoom link" → the Join button disappears after the rebuild.

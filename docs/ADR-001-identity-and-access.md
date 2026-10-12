@@ -288,7 +288,7 @@ Status vocabulary used from here on: **implemented** (in the code), **locally te
 | Finding | Fix | Status |
 |---|---|---|
 | R2-12 production routes swallowed by `[observability]` | table moved below all top-level keys; checked with a TOML parser and `wrangler deploy --dry-run` for both environments | implemented, locally tested |
-| R2-13 content repository held a code credential | no workflow and no secret in the content repository; the code repository polls it every 15 minutes (`git ls-remote`, public) and deploys on change; `environment: production`; token scoped to Workers Scripts: Edit | implemented |
+| R2-13 content repository held a code credential | no workflow and no secret in the content repository; the code repository polls it hourly (`git ls-remote`, public) and deploys on change; `environment: production`; token scoped to Workers Scripts: Edit | implemented |
 | R2-01 announcement text left out of DATA_KEY migration | re-encryption covers identities, profiles, pending profiles, announcements, links; maintenance page counts remaining rows across all stores and only then says the previous key may be removed from configuration | implemented, locally tested (600 identities) |
 | R2-02 reindex stopped at 500 rows | index entries carry the key fingerprint; passes select rows still on another key; completion is a count | implemented, locally tested (600 identities, 7 passes) |
 | R2-10 migration overwrote a concurrent edit | every migration write is compare-and-swap against the value read | implemented |
@@ -346,7 +346,7 @@ Unchanged by decision: S01, D04. Nothing is staging-verified yet.
 | Programme editor | `/admin/talks` behind Access: one form writes the public fields to the content repository (`data/talks/<slug>.json`, `photos/`, `files/`) through the GitHub Contents API and the Zoom/recording URLs to the encrypted links store; flags `join`/`recording` derived from what is stored; uploads validated by name, size and magic number; optimistic concurrency on the file sha; body cap 24 MB on this route only (`routes/talks.js`, `github.js`) | implemented, locally tested (15 checks against a GitHub stand-in) |
 | New secret | `GITHUB_CONTENT_TOKEN`: fine-grained, one repository, Contents read/write. Trust boundary: its holder can change programme text and files, not code, keys or the databases; the build still treats the repository as untrusted input | implemented, documented |
 | Content layout | one file per seminar in `data/talks/`; `data/talks.json` still read if present; the Decap CMS template and the offline form removed (superseded) | implemented |
-| Rebuild cadence | content polled every 10 minutes | implemented |
+| Rebuild cadence | content polled hourly (a free private repository has 2 000 Actions minutes a month; each poll is billed as one) | implemented |
 | test coverage | 93 end-to-end checks; results are printed even when a run aborts | implemented |
 | Russian typesetting | non-breaking spaces after prepositions and conjunctions, before dashes, inside initials and before units, applied at render time to every Russian string, field and paragraph (`render.js` typo/typoSite; the server's pages use the same); phones in Russian get a two-column menu; the masthead line is a three-place grid; Russian running text hyphenated by the browser | implemented |
 | Figure caption | plain words, no formula: a uniform stream superimposed with a point sink and a vortex; the Greek/maths font supplement removed | implemented |

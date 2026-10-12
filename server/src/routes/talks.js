@@ -108,7 +108,7 @@ ${fld('minutes_url', 'Minutes: or a link', txt('minutes_url', URL_RE.test(v.minu
 </div>
 ${v.slides || v.minutes ? `<p class="note"><label class="inline"><input type="checkbox" name="clear_slides" value="1"> Remove slides</label> &nbsp; <label class="inline"><input type="checkbox" name="clear_minutes" value="1"> Remove minutes</label></p>` : ''}
 <p class="actions"><button class="btn" type="submit">${o.existing ? 'Save changes' : 'Publish'}</button><a class="more" href="/admin/talks">Back to the programme</a></p>
-<p class="note">Publishing writes the talk to the content repository; the site rebuilds itself and shows the change within about 15 minutes. Protected links take effect immediately.</p>
+<p class="note">Publishing writes the talk to the content repository; the site rebuilds itself and shows the change within about an hour. Protected links take effect immediately.</p>
 </form>
 ${o.existing ? `<form class="form" method="post" action="/admin/talks/delete" data-confirm="Delete this talk from the programme? Its photo and documents stay in the repository."><input type="hidden" name="slug" value="${esc(v.slug)}"><p class="actions"><button class="btn btn-quiet" type="submit">Delete talk</button></p></form>` : ''}
 </div></section>`;
@@ -149,7 +149,7 @@ export async function talksAdmin(req, env, sub, who) {
       .sort((a, b) => ((b.t && b.t.date) || b.slug).localeCompare((a.t && a.t.date) || a.slug));
     const st = url.searchParams.get('s');
     const main = `<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body">
-${st === 'saved' ? '<p class="form-status">Saved. The public pages update within about 15 minutes; protected links are live now.</p>' : st === 'deleted' ? '<p class="form-status">Deleted.</p>' : ''}
+${st === 'saved' ? '<p class="form-status">Saved. The public pages update within about an hour; protected links are live now.</p>' : st === 'deleted' ? '<p class="form-status">Deleted.</p>' : ''}
 ${note ? `<p class="form-status">${esc(note)}</p>` : ''}
 <p class="actions"><a class="btn" href="/admin/talks/new">New talk</a></p>
 ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
