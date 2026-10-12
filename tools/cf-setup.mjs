@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const API = 'https://api.cloudflare.com/client/v4';
-const TOKEN = process.env.CF_SETUP_TOKEN || '';
+const TOKEN = String(process.env.CF_SETUP_TOKEN || '').trim().replace(/^("|')|("|')$/g, '').replace(/^Bearer\s+/i, '');
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 const MAILBOX = opt('--mailbox', process.env.MAILBOX || '');
@@ -50,6 +50,10 @@ const forbidden = (e) => e.status === 403 || has(e, 10000) || has(e, 9109);
 
 /* ---------- account and zones ---------- */
 async function account() {
+  try {
+    const v = await cf('GET', '/user/tokens/verify');
+    log(`token: ${v.status}${v.expires_on ? `, valid until ${v.expires_on}` : ''}${v.not_before ? `, not before ${v.not_before}` : ''} (${TOKEN.length} characters)`);
+  } catch (e) { warn(`token check: ${e.message} (${TOKEN.length} characters after trimming) — in Cloudflare → My Profile → API Tokens check that afflux-setup is Active and its dates are right, then paste it into the CF_SETUP_TOKEN secret again`); throw e; }
   const accounts = await cf('GET', '/accounts?per_page=50');
   if (!accounts.length) throw new Error('no account visible to this token (needs Account Settings: Read)');
   if (accounts.length > 1) warn(`${accounts.length} accounts visible; using the first: ${accounts[0].name}`);
