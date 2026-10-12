@@ -6,9 +6,9 @@
 #
 # Repository secrets: CLOUDFLARE_API_TOKEN ("Edit Cloudflare Workers" template, this account and zone only, no D1), CLOUDFLARE_ACCOUNT_ID.
 # Repository variables: CONTENT_REPO (affluxseminar/afflux-content), SITE_URL (https://affluxseminar.org).
-# The "production" environment must be configured with required reviewers and a deployment-branch
-# rule for main; the YAML only names it. Branch protection on main (required review, no force-push)
-# and a passkey on the owner's account are what make "owner only" true.
+# The "production" environment is configured with a deployment-branch rule for main; the YAML only
+# names it. A passkey on the owner's account is what makes "owner only" true (a free personal
+# account cannot enforce branch rulesets on a private repository; add one if that changes).
 name: Build, test and deploy
 on:
   push:

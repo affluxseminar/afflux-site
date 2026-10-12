@@ -36,9 +36,14 @@ A Russian-language, click-by-click version of this plan lives in the project doc
 ## 1. Accounts (one evening)
 - Cloudflare account (foreign card is fine), domain affluxseminar.org bought in Cloudflare Registrar,
   Email Routing enabled. Passkey sign-in, recovery codes on paper, a second passkey on another device.
-- GitHub account; two repositories: the code (this project; `main` protected, required review,
-  environment "production") and the content (from `content-repo-template/`, public, no secrets);
-  repository variable CONTENT_REPO in the code repository. A fine-grained GitHub token limited to
+- GitHub account `affluxseminar` with a passkey (two-factor sign-in): the account is the only
+  thing that can change the code or run a deploy, so its sign-in is the protection. Two
+  repositories, both done on 12 Oct 2026: the code (`afflux-site`, private; environment
+  "production" limited to `main`; repository variables CONTENT_REPO and SITE_URL) and the
+  content (`afflux-content`, public, no secrets). GitHub does not enforce branch rulesets on a
+  private repository of a free personal account, so `main` has none; if the repository is ever
+  made public or the account upgraded, add a ruleset on `main`: restrict deletions, block force
+  pushes. A fine-grained GitHub token limited to
   the content repository (Contents: read and write) for the admin's programme editor — the
   secretary never opens GitHub.
 - SMTP2GO account, Starter plan; verified sending domain; API key; log retention at the minimum.
