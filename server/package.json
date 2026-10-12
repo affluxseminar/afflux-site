@@ -1,0 +1,16 @@
+{
+  "name": "afflux-server",
+  "private": true,
+  "type": "module",
+  "description": "AFFLUX private application layer: registration and sign-in by magic link, encrypted identities, protected links, announcements. Cloudflare Worker, no runtime dependencies.",
+  "scripts": {
+    "dev": "wrangler dev --env dev --local --port 8788",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply afflux_identity --local --env dev && wrangler d1 migrations apply afflux_users --local --env dev && wrangler d1 migrations apply afflux_links --local --env dev",
+    "migrate": "wrangler d1 migrations apply afflux_identity --remote && wrangler d1 migrations apply afflux_users --remote && wrangler d1 migrations apply afflux_links --remote",
+    "mock": "node test/mock-services.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.42.0"
+  }
+}

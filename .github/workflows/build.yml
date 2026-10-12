@@ -1,0 +1,99 @@
+# Builds the static site from the public CONTENT repository and deploys it together with the
+# application server from THIS repository (code, owner only). The content repository holds no
+# credential and cannot reach this one: this workflow polls it (every 10 minutes) and deploys when
+# the live site's content-version differs from the repository's latest commit, or on a push here,
+# or on demand. The live site itself is the record of what is deployed — not a cache.
+#
+# Repository secrets: CLOUDFLARE_API_TOKEN ("Edit Cloudflare Workers" template, this account and zone only, no D1), CLOUDFLARE_ACCOUNT_ID.
+# Repository variables: CONTENT_REPO (affluxseminar/afflux-content), SITE_URL (https://affluxseminar.org).
+# The "production" environment must be configured with required reviewers and a deployment-branch
+# rule for main; the YAML only names it. Branch protection on main (required review, no force-push)
+# and a passkey on the owner's account are what make "owner only" true.
+name: Build, test and deploy
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+jobs:
+  content:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+      changed: ${{ steps.cmp.outputs.changed }}
+    steps:
+      - id: sha
+        run: |
+          sha=$(git ls-remote "https://github.com/${{ vars.CONTENT_REPO }}.git" refs/heads/main | cut -f1)
+          echo "$sha" | grep -Eq '^[0-9a-f]{40}$' || { echo "could not read the content repository"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - id: cmp
+        run: |
+          live=$(curl -sf --max-time 15 "${{ vars.SITE_URL }}/content-version.txt" | tr -d '[:space:]' || true)
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "$live" != "${{ steps.sha.outputs.sha }}" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
+
+  test:
+    needs: content
+    if: needs.content.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTENT_REPO }}
+          ref: ${{ needs.content.outputs.sha }}
+          path: content
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Build from the selected content (validates photos, links, symlinks)
+        run: node build.mjs --content content --content-sha ${{ needs.content.outputs.sha }}
+      - run: npm ci
+        working-directory: server
+      - run: pip install playwright && python -m playwright install --with-deps chromium
+      - run: cp .dev.vars.example .dev.vars.dev && npm run migrate:local
+        working-directory: server
+      - name: End-to-end checks against the local Worker
+        run: |
+          (node test/mock-services.mjs > mock.log 2>&1 &)
+          (npx wrangler dev --env dev --local --port 8788 --test-scheduled > wrangler.log 2>&1 &)
+          for i in $(seq 1 40); do sleep 2; curl -sf http://localhost:8788/api/health && break; done
+          python test/e2e.py
+        working-directory: server
+      - name: Key-rotation rehearsal (disposable local data)
+        run: python test/rotation.py --disposable 600
+        working-directory: server
+
+  deploy:
+    needs: [content, test]
+    if: needs.content.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTENT_REPO }}
+          ref: ${{ needs.content.outputs.sha }}
+          path: content
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node build.mjs --content content --content-sha ${{ needs.content.outputs.sha }}
+      - run: npm ci
+        working-directory: server
+      - run: npx wrangler deploy
+        working-directory: server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

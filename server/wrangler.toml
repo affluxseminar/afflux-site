@@ -1,0 +1,144 @@
+# AFFLUX application server (Cloudflare Worker).
+# Secrets are never here: set them with `wrangler secret put NAME` or in the dashboard:
+#   SIGNING_KEY        32+ random bytes, base64 (openssl rand -base64 32) — cookies, throttle keys, unsubscribe tokens; rotatable
+#   INDEX_KEY          32+ random bytes, base64 — the address index; stable (rotation = reindex, see admin → Maintenance)
+#   DATA_KEY           exactly 32 random bytes, base64 — encryption of addresses, names, affiliations, links, announcements
+#   SMTP2GO_API_KEY    announcements;  SMTP2GO_API_KEY_AUTH (optional) sign-in links
+#   GITHUB_CONTENT_TOKEN  fine-grained token for the CONTENT repository only (Contents: read/write) — the programme editor
+#   INDEX_KEY_PREVIOUS / DATA_KEY_PREVIOUS only during a rotation
+name = "afflux-server"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = false
+
+
+# One deployment serves both: the static site (built into ../dist, no secrets, no bindings)
+# and the dynamic paths below, which run in the Worker. Every other path is a static file.
+routes = [
+  { pattern = "affluxseminar.org", custom_domain = true }
+]
+
+[assets]
+directory = "../dist"
+not_found_handling = "404-page"
+run_worker_first = ["/register*", "/signin*", "/account*", "/go/*", "/api/*", "/admin*", "/ru/register*", "/ru/signin*", "/ru/account*", "/ru/go/*", "/ru/api/*", "/__scheduled"]
+
+[triggers]
+crons = ["17 4 * * *"]
+
+[vars]
+SITE_BASE = "https://affluxseminar.org"
+SMTP2GO_BASE_URL = "https://api.smtp2go.com"
+MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"    # the one address: sign-in links, announcements, replies
+# FEEDBACK_TO = "…"                                # where participants' comments go; defaults to the MAIL_FROM address
+SESSION_MINUTES = "129600"                         # 90 days, extended on each visit
+SIGNUP_LINK_HOURS = "24"
+LOGIN_LINK_MINUTES = "20"
+PENDING_HOURS = "24"
+LINK_HOSTS = "zoom.us,youtube.com,youtu.be"        # hosts a protected link may point to
+LINK_BINDING = "warn"                              # "strict": a sign-in link works only in the browser that asked for it
+CONTENT_REPO = "affluxseminar/afflux-content"              # the programme repository the admin's talk editor writes to (owner/name)
+CONTENT_BRANCH = "main"
+ACCESS_TEAM_DOMAIN = ""                            # e.g. afflux.cloudflareaccess.com — required for /admin
+ACCESS_AUD = ""                                    # the Access application's audience tag
+
+[[d1_databases]]
+binding = "IDENTITY_DB"
+database_name = "afflux_identity"
+database_id = "REPLACE-WITH-D1-ID"
+migrations_dir = "migrations/identity"
+
+[[d1_databases]]
+binding = "USERS_DB"
+database_name = "afflux_users"
+database_id = "REPLACE-WITH-D1-ID"
+migrations_dir = "migrations/users"
+
+[[d1_databases]]
+binding = "LINKS_DB"
+database_name = "afflux_links"
+database_id = "REPLACE-WITH-D1-ID"
+migrations_dir = "migrations/links"
+
+# Request logs would record URLs, and sign-in links carry their token in the URL: keep platform
+# logs off, and never enable Logpush or tail workers on this Worker.
+[observability]
+enabled = false
+
+# Staging: the same code on test.affluxseminar.org with its own databases and a test sender,
+# so the whole flow can be exercised with real mail, real phones and real networks before launch.
+# Create its three databases (afflux_identity_staging …), apply the migrations, set the same three
+# secrets with different random values, deploy with `wrangler deploy --env staging`.
+[env.staging]
+name = "afflux-server-staging"
+routes = [ { pattern = "test.affluxseminar.org", custom_domain = true } ]
+[env.staging.vars]
+SITE_BASE = "https://test.affluxseminar.org"
+SMTP2GO_BASE_URL = "https://api.smtp2go.com"
+MAIL_FROM = "AFFLUX test <seminar@affluxseminar.org>"
+SESSION_MINUTES = "129600"
+SIGNUP_LINK_HOURS = "24"
+LOGIN_LINK_MINUTES = "20"
+PENDING_HOURS = "24"
+LINK_HOSTS = "zoom.us,youtube.com,youtu.be"
+LINK_BINDING = "warn"
+CONTENT_REPO = "affluxseminar/afflux-content"
+CONTENT_BRANCH = "main"
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
+[[env.staging.d1_databases]]
+binding = "IDENTITY_DB"
+database_name = "afflux_identity_staging"
+database_id = "REPLACE-WITH-D1-ID"
+migrations_dir = "migrations/identity"
+[[env.staging.d1_databases]]
+binding = "USERS_DB"
+database_name = "afflux_users_staging"
+database_id = "REPLACE-WITH-D1-ID"
+migrations_dir = "migrations/users"
+[[env.staging.d1_databases]]
+binding = "LINKS_DB"
+database_name = "afflux_links_staging"
+database_id = "REPLACE-WITH-D1-ID"
+migrations_dir = "migrations/links"
+[env.staging.triggers]
+crons = ["17 4 * * *"]
+
+# Local development: mock mail service (node test/mock-services.mjs), admin without Access.
+[env.dev]
+workers_dev = true
+routes = []
+[env.dev.vars]
+SITE_BASE = "http://localhost:8788"
+SMTP2GO_BASE_URL = "http://127.0.0.1:9101"
+MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"
+SESSION_MINUTES = "129600"
+SIGNUP_LINK_HOURS = "24"
+LOGIN_LINK_MINUTES = "20"
+PENDING_HOURS = "24"
+LINK_HOSTS = "zoom.example.org,video.example.org,zoom.us,youtube.com,youtu.be"
+LINK_BINDING = "warn"
+CONTENT_REPO = "afflux-test/afflux-content"
+CONTENT_BRANCH = "main"
+GITHUB_API_BASE = "http://127.0.0.1:9101"
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
+DEV_ADMIN_BYPASS = "yes-local-only"
+# Local secrets come from .dev.vars.dev (see .dev.vars.example).
+[[env.dev.d1_databases]]
+binding = "IDENTITY_DB"
+database_name = "afflux_identity"
+database_id = "local-identity"
+migrations_dir = "migrations/identity"
+[[env.dev.d1_databases]]
+binding = "USERS_DB"
+database_name = "afflux_users"
+database_id = "local-users"
+migrations_dir = "migrations/users"
+[[env.dev.d1_databases]]
+binding = "LINKS_DB"
+database_name = "afflux_links"
+database_id = "local-links"
+migrations_dir = "migrations/links"
+[env.dev.triggers]
+crons = ["17 4 * * *"]

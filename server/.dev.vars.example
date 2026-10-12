@@ -1,0 +1,7 @@
+# Local development secrets for `wrangler dev --env dev`. Copy to .dev.vars.dev (git-ignored).
+# These values only ever talk to the local mock mail service (node test/mock-services.mjs).
+SIGNING_KEY=bG9jYWwtZGV2LW9ubHktc2lnbmluZy1rZXktMzItYnl0ZXM=
+INDEX_KEY=bG9jYWwtZGV2LW9ubHktaW5kZXgta2V5LTMyLWJ5dGVzISE=
+DATA_KEY=bG9jYWwtZGV2LW9ubHktZGF0YS1rZXktMzItYnl0ZXM=
+SMTP2GO_API_KEY=api-test-local
+GITHUB_CONTENT_TOKEN=github-test-local
