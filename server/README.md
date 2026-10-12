@@ -138,6 +138,14 @@ spent and expired tokens, dead sessions; purges throttle counters.
 
 ## Setting up (all in web dashboards; no terminal needed)
 
+The Cloudflare part of steps 1, 4, 5 and 6 is scripted: `tools/cf-setup.mjs`, run by the
+"Cloudflare setup" workflow (Actions → Run workflow) with a temporary API token in the repository
+secret `CF_SETUP_TOKEN` (the permissions are listed at the top of `.github/workflows/cf-setup.yml`).
+It creates the databases, applies the migrations, sets SSL, DNS, Email Routing, the redirects from
+the .com and from www, the rate-limiting rule and the Access application, and does the first
+deploy; its log ends with the values to commit into `wrangler.toml`. Delete the token and the
+secret afterwards. The manual route below gives the same result.
+
 1. **Cloudflare.** D1 → create `afflux_identity`, `afflux_users`, `afflux_links` with the location
    hint *Western Europe* (`weur`); paste the ids into `wrangler.toml`; apply the three migration files
    in each database's console (or `npm run migrate`). The first deploy comes from the GitHub workflow

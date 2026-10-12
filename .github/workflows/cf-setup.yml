@@ -1,0 +1,74 @@
+# One-off Cloudflare setup, run by hand from the Actions tab ("Run workflow"). It needs the
+# repository secret CF_SETUP_TOKEN: a Cloudflare API token with
+#   Account: Workers Scripts Edit, D1 Edit, Account Settings Read, Email Routing Addresses Edit,
+#            Access: Apps and Policies Edit, Access: Organizations, Identity Providers and Groups Edit
+#   Zone:    Zone Read, Zone Settings Edit, DNS Edit, Workers Routes Edit, Email Routing Rules Edit,
+#            Zone WAF Edit, Single Redirect Edit
+# Delete that token (Cloudflare → My Profile → API Tokens) and this secret once the setup is done;
+# routine deploys use the narrower CLOUDFLARE_API_TOKEN in build.yml. Every step is idempotent.
+name: Cloudflare setup
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: "Steps: all, or a comma list of account,d1,zone,dns,email,redirects,ratelimit,access"
+        default: all
+      mailbox:
+        description: "Mailbox that receives seminar@ mail and signs in to /admin"
+        default: afflux2026@gmail.com
+      migrate:
+        description: "Apply the D1 migrations"
+        type: boolean
+        default: true
+      deploy:
+        description: "Build the site and deploy the Worker"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTENT_REPO }}
+          path: content
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+        working-directory: server
+      - name: Configure Cloudflare (idempotent)
+        env:
+          CF_SETUP_TOKEN: ${{ secrets.CF_SETUP_TOKEN }}
+        run: node tools/cf-setup.mjs --mailbox "${{ inputs.mailbox }}" --steps "${{ inputs.steps }}"
+      - name: Apply D1 migrations
+        if: ${{ inputs.migrate }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_SETUP_TOKEN }}
+        run: |
+          export CLOUDFLARE_ACCOUNT_ID=$(node -p "require('../cf-setup.out.json').account_id")
+          npm run migrate
+        working-directory: server
+      - name: Build the site from the content repository
+        if: ${{ inputs.deploy }}
+        run: node build.mjs --content content --content-sha "$(git -C content rev-parse HEAD)"
+      - name: Deploy the Worker
+        if: ${{ inputs.deploy }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_SETUP_TOKEN }}
+        run: |
+          export CLOUDFLARE_ACCOUNT_ID=$(node -p "require('../cf-setup.out.json').account_id")
+          npx wrangler deploy
+        working-directory: server
+      - name: Values to commit (no secrets)
+        if: always()
+        run: |
+          echo "----- cf-setup.out.json -----"; cat cf-setup.out.json 2>/dev/null || echo "(none)"
+          echo "----- server/wrangler.toml (patched) -----"; grep -n 'database_id\|ACCESS_TEAM_DOMAIN\|ACCESS_AUD' server/wrangler.toml
