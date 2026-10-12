@@ -39,25 +39,25 @@ LINK_HOSTS = "zoom.us,youtube.com,youtu.be"        # hosts a protected link may 
 LINK_BINDING = "warn"                              # "strict": a sign-in link works only in the browser that asked for it
 CONTENT_REPO = "affluxseminar/afflux-content"              # the programme repository the admin's talk editor writes to (owner/name)
 CONTENT_BRANCH = "main"
-ACCESS_TEAM_DOMAIN = ""                            # e.g. afflux.cloudflareaccess.com — required for /admin
-ACCESS_AUD = ""                                    # the Access application's audience tag
+ACCESS_TEAM_DOMAIN = "affluxseminar.cloudflareaccess.com"                            # e.g. afflux.cloudflareaccess.com — required for /admin
+ACCESS_AUD = "6d52cddbe9e78bbd688d96df2b391a2d52fca52f8347f9b5635d295944390989"                                    # the Access application's audience tag
 
 [[d1_databases]]
 binding = "IDENTITY_DB"
 database_name = "afflux_identity"
-database_id = "REPLACE-WITH-D1-ID"
+database_id = "a92d2e06-ac88-4b9a-890b-c828bac95266"
 migrations_dir = "migrations/identity"
 
 [[d1_databases]]
 binding = "USERS_DB"
 database_name = "afflux_users"
-database_id = "REPLACE-WITH-D1-ID"
+database_id = "b7bdd9c7-9de7-4ba0-895a-8f3b3afb05d0"
 migrations_dir = "migrations/users"
 
 [[d1_databases]]
 binding = "LINKS_DB"
 database_name = "afflux_links"
-database_id = "REPLACE-WITH-D1-ID"
+database_id = "10e71808-ba5b-4c0d-ba23-4323bfa9a605"
 migrations_dir = "migrations/links"
 
 # Request logs would record URLs, and sign-in links carry their token in the URL: keep platform

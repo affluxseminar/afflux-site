@@ -4,7 +4,7 @@
    touches secrets: the six Worker secrets are entered in the dashboard by the owner.
 
    Usage: CF_SETUP_TOKEN=… node tools/cf-setup.mjs --mailbox you@example.org [--steps a,b,c] [--site DIR]
-   Steps: account d1 zone dns email redirects ratelimit access summary   (default: all)
+   Steps: account d1 subdomain zone dns email redirects ratelimit access summary   (default: all)
    Writes: cf-setup.out.json (ids for wrangler.toml) and patches server/wrangler.toml in place
    so that `wrangler d1 migrations apply` and `wrangler deploy` can run right after. */
 
@@ -91,6 +91,15 @@ async function d1() {
   writeFileSync(p, toml);
   log('wrangler.toml patched with the database ids (commit these):');
   for (const [binding] of DBS) log(`  ${binding} = ${out.d1[binding].id}`);
+}
+
+/* ---------- workers.dev subdomain: the account needs one before cron triggers can be set ---------- */
+async function subdomain() {
+  let cur = null;
+  try { cur = await cf('GET', `/accounts/${out.account_id}/workers/subdomain`, undefined, { ok404: true }); } catch (e) { if (!has(e, 10007)) throw e; }
+  if (cur && cur.subdomain) { log(`workers.dev subdomain: ${cur.subdomain}.workers.dev (exists; workers_dev = false keeps it unused)`); return; }
+  const r = await cf('PUT', `/accounts/${out.account_id}/workers/subdomain`, { subdomain: TEAM });
+  log(`workers.dev subdomain: ${r.subdomain}.workers.dev registered (required by the API; the Worker is not published on it)`);
 }
 
 /* ---------- zone settings ---------- */
@@ -229,10 +238,10 @@ function summary() {
   log('=====================================================================================================');
 }
 
-const run = { account, d1, zone, dns, email, redirects, ratelimit, access };
+const run = { account, d1, subdomain, zone, dns, email, redirects, ratelimit, access };
 (async () => {
   if (!out.account_id || want('account')) await account();
-  for (const step of ['d1', 'zone', 'dns', 'email', 'redirects', 'ratelimit', 'access']) {
+  for (const step of ['d1', 'subdomain', 'zone', 'dns', 'email', 'redirects', 'ratelimit', 'access']) {
     if (!want(step)) continue;
     log(`\n--- ${step} ---`);
     try { await run[step](); } catch (e) { warn(`${step} failed: ${e.message}`); process.exitCode = 1; }

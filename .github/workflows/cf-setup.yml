@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "Steps: all, or a comma list of account,d1,zone,dns,email,redirects,ratelimit,access"
+        description: "Steps: all, or a comma list of account,d1,subdomain,zone,dns,email,redirects,ratelimit,access"
         default: all
       mailbox:
         description: "Mailbox that receives seminar@ mail and signs in to /admin"
@@ -65,7 +65,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_SETUP_TOKEN }}
         run: |
           export CLOUDFLARE_ACCOUNT_ID=$(node -p "require('../cf-setup.out.json').account_id")
-          npx wrangler deploy
+          npx wrangler deploy --env ""
         working-directory: server
       - name: Values to commit (no secrets)
         if: always()
