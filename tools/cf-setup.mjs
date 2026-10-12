@@ -4,7 +4,7 @@
    touches secrets: the six Worker secrets are entered in the dashboard by the owner.
 
    Usage: CF_SETUP_TOKEN=… node tools/cf-setup.mjs --mailbox you@example.org [--steps a,b,c] [--site DIR]
-   Steps: account d1 subdomain zone dns email redirects ratelimit access summary   (default: all)
+   Steps: account d1 subdomain zone ech dns email redirects ratelimit access summary   (default: all)
    Writes: cf-setup.out.json (ids for wrangler.toml) and patches server/wrangler.toml in place
    so that `wrangler d1 migrations apply` and `wrangler deploy` can run right after. */
 
@@ -111,6 +111,15 @@ async function zone() {
       try { const r = await cf('PATCH', `/zones/${out[key]}/settings/${id}`, { value }); log(`${key} ${id}: ${r.value}`); }
       catch (e) { warn(`${key} ${id}: ${e.message}`); }
     }
+  }
+}
+
+/* ---------- reachability from Russia: no ECH (TSPU drops TLS handshakes that carry it) ---------- */
+async function ech() {
+  for (const key of ['zone_org', 'zone_com']) {
+    if (!out[key]) continue;
+    try { const r = await cf('PATCH', `/zones/${out[key]}/settings/ech`, { value: 'off' }); log(`${key} ech: ${r.value}`); }
+    catch (e) { warn(`${key} ech: ${e.message}`); }
   }
 }
 
@@ -238,10 +247,10 @@ function summary() {
   log('=====================================================================================================');
 }
 
-const run = { account, d1, subdomain, zone, dns, email, redirects, ratelimit, access };
+const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access };
 (async () => {
   if (!out.account_id || want('account')) await account();
-  for (const step of ['d1', 'subdomain', 'zone', 'dns', 'email', 'redirects', 'ratelimit', 'access']) {
+  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access']) {
     if (!want(step)) continue;
     log(`\n--- ${step} ---`);
     try { await run[step](); } catch (e) { warn(`${step} failed: ${e.message}`); process.exitCode = 1; }

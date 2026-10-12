@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "Steps: all, or a comma list of account,d1,subdomain,zone,dns,email,redirects,ratelimit,access"
+        description: "Steps: all, or a comma list of account,d1,subdomain,zone,ech,dns,email,redirects,ratelimit,access"
         default: all
       mailbox:
         description: "Mailbox that receives seminar@ mail and signs in to /admin"
