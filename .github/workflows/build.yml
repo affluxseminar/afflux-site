@@ -97,7 +97,7 @@ jobs:
       - run: node build.mjs --content content --content-sha ${{ needs.content.outputs.sha }}
       - run: npm ci
         working-directory: server
-      - run: npx wrangler deploy
+      - run: npx wrangler deploy --env ""
         working-directory: server
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
