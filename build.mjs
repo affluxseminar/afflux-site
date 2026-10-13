@@ -81,6 +81,9 @@ if (TALKS_DIR && existsSync(TALKS_DIR)) {
 
 const css = readFileSync(join(HERE, 'src/style.css'), 'utf8');
 const clientJs = readFileSync(join(HERE, 'src/client.js'), 'utf8');
+/* Every page links its stylesheet and scripts with a version from their contents, so a browser or a
+   CDN edge can never pair a new page with an old stylesheet (and vice versa). The file names stay plain. */
+const assetVersion = (text) => createHash('sha256').update(text, 'utf8').digest('base64url').slice(0, 10);
 const renderSrc = readFileSync(join(HERE, 'src/render.js'), 'utf8');
 
 await import(join(HERE, 'src/render.js'));
@@ -200,7 +203,7 @@ ${preview ? '' : `<link rel="canonical" href="${canonical}">
 <meta property="og:locale" content="${lang === 'ru' ? 'ru_RU' : 'en_GB'}">
 <meta property="og:locale:alternate" content="${lang === 'ru' ? 'en_GB' : 'ru_RU'}">
 <meta name="twitter:card" content="summary_large_image">
-${preview ? `<style>\n${fontFaceInline()}\n</style>` : `<link rel="stylesheet" href="/assets/style.css">\n<script src="/assets/client.js" defer></script>\n<script src="/assets/field-live.js" defer></script>`}
+${preview ? `<style>\n${fontFaceInline()}\n</style>` : `<link rel="stylesheet" href="/assets/style.css?v=${assetVersion(css)}">\n<script src="/assets/client.js?v=${assetVersion(clientJs)}" defer></script>\n<script src="/assets/field-live.js?v=${assetVersion(fieldLiveJs)}" defer></script>`}
 ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/<\//g, '<\\/')}</script>` : ''}`;
 }
 
