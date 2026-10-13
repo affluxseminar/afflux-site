@@ -55,6 +55,19 @@ with sync_playwright() as p:
     r=ap.request.post(B+'/admin/talks/delete', form={'slug':'2026-11-05-ivanova'}, headers={'Origin':B}, max_redirects=0)
     ok(r.status==303 and 'data/talks/2026-11-05-ivanova.json' not in {x['path'] for x in get(M+'/_repo')}, 'delete removes the talk file; documents stay')
     anon2=b.new_context(); r=anon2.request.get(B+'/admin/talks', headers={'Host':'example.org'}); ok(r.status==403, 'programme editor closed without Access on a non-loopback host'); anon2.close()
+    # ---- site texts editor: About, conveners and the short texts go to data/site-texts.json ----
+    ap.goto(B+'/admin/texts'); h=ap.content()
+    ok('name="s_ru_subtitle"' in h and 'Economics of Energy' in h and '<a href="/admin/texts">Texts</a>' in h, 'texts editor shows the current texts and is in the admin nav')
+    tv={n: ap.evaluate("n=>document.querySelector(`[name=\"${n}\"]`).value", n) for n in ap.evaluate("[...document.querySelectorAll('form[action=\"/admin/texts/save\"] [name]')].map(e=>e.name)")}
+    tv.update({'about_ru':'Первый абзац.\r\n\r\nВторой абзац\r\nпродолжение.', 's_ru_subtitle':'Семинар (тест)', 'c0_cred_ru':'Академик РАН\r\n\r\nПрофессор', 'c2_name_en':'Third Person'})
+    r=ap.request.post(B+'/admin/texts/save', form=tv, headers={'Origin':B}, max_redirects=0); ok(r.status==303, f'texts saved ({r.status})')
+    tf={x['path']:x for x in get(M+'/_repo')}['data/site-texts.json']; tj=json.loads(tf['text'])
+    ok(tj['about']['ru']==['Первый абзац.','Второй абзац продолжение.'] and tj['strings']['ru']['subtitle']=='Семинар (тест)' and tj['conveners'][0]['credentials']['ru']==['Академик РАН','Профессор'] and tj['conveners'][2]['name']['en']=='Third Person', 'site-texts.json carries paragraphs, strings, credential lines and the added convener')
+    ap.goto(B+'/admin/texts?s=saved'); h=ap.content(); ok('Семинар (тест)' in h and 'Второй абзац продолжение.' in h and 'name="c3_name_en"' in h, 'reloaded editor shows the saved texts and one more convener slot')
+    r=ap.request.post(B+'/admin/texts/save', form={**tv,'sha':'stale'}, headers={'Origin':B}, max_redirects=0); ok(r.status==409, 'stale texts edit refused')
+    r=ap.request.post(B+'/admin/texts/save', form={**tv,'s_en_subtitle':'x'*300,'sha':tf['sha']}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'longer than' in r.text(), 'over-long text refused with the field named')
+    r=ap.request.post(B+'/admin/texts/save', form={k:('' if k.startswith('c') else v) for k,v in tv.items()}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'convener' in r.text().lower(), 'texts without any convener refused')
+    r=b.new_context().request.post(B+'/admin/texts/save', form=tv, headers={'Origin':'https://evil.example'}, max_redirects=0); ok(r.status==403, 'texts save from a foreign origin refused')
     # ---- anonymous visitor ----
     ctx=b.new_context(); stub(ctx); pg=ctx.new_page()
     resp=pg.goto(B+'/go/join/2026-10-15-test/')

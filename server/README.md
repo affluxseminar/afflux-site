@@ -20,6 +20,8 @@ src/routes/auth.js      register, sign-in, verify, account, sign-out, delete
 src/routes/go.js        /go/join/<slug>/ and /go/recording/<slug>/ — session, account, then redirect
 src/routes/unsubscribe.js  one-click unsubscribe with a signed, expiring token
 src/routes/admin.js     protected links and announcements, behind Cloudflare Access
+src/routes/talks.js     the programme editor: one form per talk → data/talks/<slug>.json in the content repository
+src/routes/texts.js     the site's texts: About, conveners, short texts → data/site-texts.json in the content repository
 src/pages.js            pages rendered with the site's own templates and strings
 src/db.js               users (application data) and links (protected URLs), encryption hidden inside
 src/security.js         headers, same-origin check for POST, rate limits, return-path allow-list

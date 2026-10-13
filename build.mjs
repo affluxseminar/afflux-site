@@ -19,6 +19,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { THEME_INIT, THEME_INIT_HASH, cspPolicy, SECURITY_HEADERS } from './src/shared.js';
 import { FIELD, streamlineSvg, fieldAttrs } from './src/field.js';
+import { validateTexts, applyTexts } from './src/texts.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -54,7 +55,20 @@ const safePhoto = (dir, name) => safeContentFile(dir, name, PHOTO_NAME, 8, 'phot
 const safeFile = (dir, name) => safeContentFile(dir, name, FILE_NAME, 40, 'files');
 const NOW = process.env.BUILD_NOW ? new Date(process.env.BUILD_NOW) : new Date();
 
-const site = JSON.parse(readFileSync(join(HERE, 'data/site.json'), 'utf8'));
+let site = JSON.parse(readFileSync(join(HERE, 'data/site.json'), 'utf8'));
+/* The secretary's texts (About, conveners, selected strings) come from the content repository,
+   data/site-texts.json, written by the admin's Texts page; they are checked and merged over the
+   defaults (src/texts.js). A broken file stops the build rather than publishing half a site. */
+const TEXTS_FILE = CONTENT ? join(CONTENT, 'data/site-texts.json') : null;
+if (TEXTS_FILE && existsSync(TEXTS_FILE)) {
+  const st = lstatSync(TEXTS_FILE);
+  if (st.isSymbolicLink() || !st.isFile() || st.size > 512 * 1024) { console.error('content: data/site-texts.json refused (symbolic link, not a regular file, or over 512 kB)'); process.exit(1); }
+  let texts;
+  try { texts = JSON.parse(readFileSync(TEXTS_FILE, 'utf8')); } catch (e) { console.error(`content: data/site-texts.json is not valid JSON: ${e.message}`); process.exit(1); }
+  const problems = validateTexts(texts);
+  if (problems.length) { for (const m of problems) console.error(`content: data/site-texts.json: ${m}`); process.exit(1); }
+  site = applyTexts(site, texts);
+}
 const talks = [];
 if (existsSync(TALKS_FILE)) {
   if (lstatSync(TALKS_FILE).isSymbolicLink()) { console.error('content: talks.json is a symbolic link; refused'); process.exit(1); }

@@ -17,7 +17,9 @@ sign-in and announcement code described further down is dormant, kept for a futu
 it lawfully; `docs/ADR-001-identity-and-access.md`, amendment of 13 Oct 2026, records the decision.
 
 ```
-data/site.json        settings, conveners, every UI string in both languages, the About text
+data/site.json        settings, conveners, every UI string in both languages, the About text (defaults)
+src/texts.js          which of those texts the admin's Texts page may change, and how data/site-texts.json
+                      from the content repository is checked and merged over the defaults
 data/talks/           the programme — one JSON file per seminar, written by the admin's editor (or by hand)
 src/render.js         templates, shared by the build and the single-file preview
 src/style.css         the visual system: three appearances, type, grid
@@ -92,12 +94,22 @@ Past seminars move to the Archive at the next build. The workflow rebuilds whene
 changes (polled every 10 minutes), and `client.js` retires the join link the moment a session ends,
 before the rebuild.
 
+## The site's own texts
+
+The About page, the conveners' names and credentials, and the short texts of the masthead, footer,
+programme pages and Subscribe page are edited in the admin (`/admin/texts`, two languages side by
+side) and saved to the content repository as `data/site-texts.json`. The build checks that file
+(`src/texts.js`: only the listed fields, length limits, paragraphs and credential lines as plain
+strings) and merges it over the defaults in `data/site.json`; an empty field means the default.
+A broken file stops the build, so the live site never shows half a change. Everything else in
+`data/site.json` — button labels, error texts, the figure caption — is changed in this repository.
+
 ## Two repositories
 
 The programme is public and changes weekly; the code changes rarely and can read the databases.
 They live in different repositories with different people allowed to push:
 
-- **afflux-content** (from `content-repo-template/`): `data/talks.json`, `photos/`, and the CMS
+- **afflux-content** (from `content-repo-template/`): `data/talks/`, `data/site-texts.json`, `photos/`, `files/`, and the CMS
   (`admin/`, Decap, pinned and hash-verified, deployed as its own tiny site). The secretary edits
   here, through the form or GitHub's editor. Pushing here only triggers a rebuild of the pages.
 - **afflux-site** (this repository): templates, build, Worker, deploy workflow. The owner only,

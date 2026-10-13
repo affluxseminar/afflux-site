@@ -535,6 +535,11 @@ h1, h2, .prose, .synopsis, .lede, .who, .row-who, .row-title { hyphens: manual; 
 .form label.inline { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.3rem 0 0; font-size: var(--fs-0); }
 .form label.inline input { accent-color: var(--accent); }
 .form .form-status > div + div { margin-top: 0.3rem; }
+/* the admin's texts editor: a label over an EN/RU pair */
+.form .form-label { font-size: var(--fs-1); font-weight: 500; margin-bottom: 0.3rem; }
+.form .form-label + .note { margin: 0 0 0.5rem; }
+.form-grid2 > div > label { font-size: var(--fs-0); color: var(--text-2); }
+.form-convener { padding: 1rem 0 0.25rem; border-top: 1px dashed var(--rule); margin-top: 0.5rem; }
 @media (max-width: 47.99rem) { .form-grid2 { grid-template-columns: 1fr; } }
 
 /* ---------- footer ---------- */

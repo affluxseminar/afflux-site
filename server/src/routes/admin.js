@@ -8,6 +8,7 @@ import { clean, allowedLinkHost, readForm } from '../security.js';
 import { randomToken } from '../crypto.js';
 import * as P from '../pages.js';
 import { talksAdmin } from './talks.js';
+import { textsAdmin } from './texts.js';
 
 const esc = P.esc;
 const CHUNK = 20;
@@ -68,6 +69,7 @@ export async function admin(req, env, sub) {
   const url = new URL(req.url);
   const isPost = req.method === 'POST';
   if (sub === '/talks' || sub.startsWith('/talks/')) return talksAdmin(req, env, sub, who.email);
+  if (sub === '/texts' || sub.startsWith('/texts/')) return textsAdmin(req, env, sub, who.email);
 
   /* With registration closed the site keeps nothing about participants, so the admin is the
      programme editor and nothing else; the other pages stay out of reach. */
@@ -78,7 +80,8 @@ export async function admin(req, env, sub) {
     if (isPost) return new Response('Method not allowed', { status: 405 });
     if (closed) {
       const main = `<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body"><p class="actions"><a class="btn" href="/admin/talks/new">New talk</a><a class="more" href="/admin/talks">All talks</a></p>
-<p class="note">The public site collects nothing about its visitors: no accounts, no registration, no mailing list. Announcements go out from the seminar's own mailbox.</p></div></section>`;
+<p class="note">The public site collects nothing about its visitors: no accounts, no registration, no mailing list. Announcements go out from the seminar's own mailbox.</p></div></section>
+<section class="sec"><h2 class="sec-label">Site texts</h2><div class="sec-body"><p class="actions"><a class="btn btn-quiet" href="/admin/texts">Edit the texts</a></p><p class="note">The About page, the conveners' credentials, the masthead, footer and Subscribe texts, in both languages.</p></div></section>`;
       return html(P.adminPage({ title: 'Overview', main, who: who.email, closed }));
     }
     const c = await users.counts(env);
@@ -86,7 +89,7 @@ export async function admin(req, env, sub) {
     const main = `<section class="sec"><h2 class="sec-label">Accounts</h2><div class="sec-body"><dl class="kv">
 <dt>Registered</dt><dd>${c.total}</dd><dt>English list</dt><dd>${c.en}</dd><dt>Russian list</dt><dd>${c.ru}</dd><dt>Pending registrations</dt><dd>${c.pending}</dd></dl></div></section>
 <section class="sec"><h2 class="sec-label">Recent announcements</h2><div class="sec-body">${recent.length ? `<ol class="ledger">${recent.map((r) => `<li class="row"><time class="row-date">${esc(r.created_at.slice(0, 10))}</time><span class="row-who">${esc(r.list.toUpperCase())}</span><a class="row-title" href="/admin/announce/run?id=${esc(r.id)}">${esc(r.subject)}</a><span class="row-lang">${r.sent}/${r.total}${r.status === 'running' ? ' …' : ''}</span><span class="row-links"></span></li>`).join('')}</ol>` : '<p class="note">None yet.</p>'}</div></section>
-<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body"><p class="actions"><a class="btn" href="/admin/talks/new">New talk</a><a class="more" href="/admin/talks">All talks</a></p></div></section>
+<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body"><p class="actions"><a class="btn" href="/admin/talks/new">New talk</a><a class="more" href="/admin/talks">All talks</a><a class="more" href="/admin/texts">Site texts</a></p></div></section>
 <section class="sec"><h2 class="sec-label">Maintenance</h2><div class="sec-body"><p class="note"><a href="/admin/maintenance">Key migrations and session revocation</a></p></div></section>`;
     return html(P.adminPage({ title: 'Overview', main, who: who.email }));
   }

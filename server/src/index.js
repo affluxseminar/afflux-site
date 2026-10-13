@@ -4,6 +4,7 @@ import * as auth from './routes/auth.js';
 import { getGo } from './routes/go.js';
 import { getUnsubscribe, postUnsubscribe } from './routes/unsubscribe.js';
 import { admin } from './routes/admin.js';
+import { MAX_TEXTS_BODY } from './routes/texts.js';
 import { pending, throttle } from './db.js';
 import { identity } from './identity/index.js';
 
@@ -64,7 +65,7 @@ async function handle(req, env) {
   }
 
   if (m === 'POST') {
-    if (bodyTooLarge(req, p === '/admin/talks/save' ? MAX_UPLOAD_BODY : undefined)) return new Response('Payload too large', { status: 413 });
+    if (bodyTooLarge(req, p === '/admin/talks/save' ? MAX_UPLOAD_BODY : p === '/admin/texts/save' ? MAX_TEXTS_BODY : undefined)) return new Response('Payload too large', { status: 413 });
     if (p === '/api/unsubscribe') return postUnsubscribe(req, env, lang);   // signed token is the authorization
     if (!sameOrigin(req, env)) return new Response('Forbidden', { status: 403 });
     if (!(await allowGeneric(env, req))) return new Response('Too many requests', { status: 429 });

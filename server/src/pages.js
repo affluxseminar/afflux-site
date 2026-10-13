@@ -235,7 +235,7 @@ export function unsubscribePage(lang, token, done, invalid) {
 /* Admin pages: plain, behind Cloudflare Access. English only. */
 export function adminPage({ title, main, who, closed }) {
   const nav = closed
-    ? `<a href="/admin/">Overview</a>, <a href="/admin/talks">Programme</a>.`
-    : `<a href="/admin/">Overview</a>, <a href="/admin/talks">Programme</a>, <a href="/admin/announce">Announcement</a>, <a href="/admin/links">Protected links</a>.`;
+    ? `<a href="/admin/">Overview</a>, <a href="/admin/talks">Programme</a>, <a href="/admin/texts">Texts</a>.`
+    : `<a href="/admin/">Overview</a>, <a href="/admin/talks">Programme</a>, <a href="/admin/texts">Texts</a>, <a href="/admin/announce">Announcement</a>, <a href="/admin/links">Protected links</a>.`;
   return shell({ lang: 'en', kind: 'account', path: '/admin/', title: `Admin: ${title}`, main: `<section class="page-head"><h1 class="page-title">${esc(title)}</h1><p class="lede">Signed in as ${esc(who)}. ${nav}</p></section>${main}` });
 }
