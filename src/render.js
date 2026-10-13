@@ -454,7 +454,10 @@ ${sections || `<section class="sec">
   function subscribePage(ctx) {
     const { lang, site } = ctx;
     const s = site.strings[lang];
-    const mail = `mailto:${site.email}?subject=${encodeURIComponent(s.subscribeSubject)}`;
+    // The subject travels through the phone's mail app: some (Samsung Email among them) garble non-Latin
+    // letters in a mailto link, so the subject is kept to Latin letters and plain spaces.
+    const subject = String(s.subscribeSubject || '').replace(/\u00A0/g, ' ').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
+    const mail = `mailto:${site.email}${subject ? `?subject=${encodeURIComponent(subject)}` : ''}`;
     return `<section class="page-head">
   <h1 class="page-title">${esc(s.subscribeTitle)}</h1>
   <p class="lede">${esc(s.subscribeLead)}</p>
