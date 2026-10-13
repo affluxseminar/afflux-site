@@ -85,7 +85,6 @@ ${fld('speaker_ru', 'Speaker in Russian (optional)', txt('speaker_ru', v.speaker
 ${fld('affiliation', 'Affiliation', txt('affiliation', v.affiliation))}
 ${fld('affiliation_ru', 'Affiliation in Russian (optional)', txt('affiliation_ru', v.affiliation_ru))}
 ${fld('language', 'Talk language', `<select id="language" name="language"><option value="en"${v.language !== 'ru' ? ' selected' : ''}>English</option><option value="ru"${v.language === 'ru' ? ' selected' : ''}>Russian</option></select>`, 'The language the talk is given in; shown on its page.')}
-${fld('number', 'Seminar number', `<input id="number" type="number" name="number" min="1" step="1" value="${esc(v.number || '')}">`, 'Leave empty for the next number.')}
 ${fld('slug', 'Page address (slug)', txt('slug', v.slug, o.existing ? ' readonly' : ' placeholder="made from the date and the surname if left empty"'), o.existing ? 'Cannot change after publishing.' : 'Letters, digits, dots, hyphens. Example: 2026-10-21-ivanova.')}
 ${fld('photo', 'Photo', `<input id="photo" type="file" name="photo" accept=".jpg,.jpeg,.png,.webp">`, `${v.photo ? `Current: ${esc(v.photo)}. ` : ''}Portrait, at least 480×600 px, up to 8 MB; shown in black and white.`)}
 </div>
@@ -219,10 +218,8 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
       if (slidesFile) { t.slides = `${v.slug}-slides.${slidesFile.ext}`; await putFile(`files/${t.slides}`, slidesFile.bytes, 'slides'); } else if (v.slides_url) t.slides = v.slides_url;
       if (minutesFile) { t.minutes = `${v.slug}-minutes.${minutesFile.ext}`; await putFile(`files/${t.minutes}`, minutesFile.bytes, 'minutes'); } else if (v.minutes_url) t.minutes = v.minutes_url;
 
-      const built = await programme(env);
-      const number = v.number ? Number(v.number) : (t.number || (built.reduce((m, x) => Math.max(m, Number(x.number) || 0), 0) + 1));
       const record = {
-        number, slug: v.slug,
+        slug: v.slug,
         speaker: nameField(v.speaker, v.speaker_ru), affiliation: nameField(v.affiliation, v.affiliation_ru),
         photo: t.photo || '', date: v.date, time: v.time, language: v.language,
         title: bilingual(v.title_en, v.title_ru), abstract: bilingual(v.abstract_en, v.abstract_ru), bio: bilingual(v.bio_en, v.bio_ru),

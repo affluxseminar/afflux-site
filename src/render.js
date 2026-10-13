@@ -312,7 +312,7 @@
   ${whenBlock(n, ctx, { big: true })}
   <h3 class="next-title${title.text.length > 80 ? ' is-long' : ''}"><a href="${ctx.url(lang, talkPath(n))}"${title.lang ? ` lang="${title.lang}"` : ''}>${esc(title.text)}</a></h3>
   ${speakerLine(n, ctx)}
-  <p class="meta">${esc(s.talkIn[n.language] || '')}. ${esc(fill(s.seminarNo, { n: n.number }))}.</p>
+  <p class="meta">${esc(s.talkIn[n.language] || '')}.</p>
   ${syn.text ? `<p class="synopsis"${syn.lang ? ` lang="${syn.lang}"` : ''}>${esc(syn.text)}</p>` : ''}
   ${actions(n, ctx)}
 </div>`;
@@ -377,7 +377,7 @@ ${recent.length ? `
       ${whenBlock(n, ctx, { big: true })}
       <h3 class="next-title${title.text.length > 80 ? ' is-long' : ''}"><a href="${ctx.url(lang, talkPath(n))}"${title.lang ? ` lang="${title.lang}"` : ''}>${esc(title.text)}</a></h3>
       ${speakerLine(n, ctx)}
-      <p class="meta">${esc(s.talkIn[n.language] || '')}. ${esc(fill(s.seminarNo, { n: n.number }))}.</p>
+      <p class="meta">${esc(s.talkIn[n.language] || '')}.</p>
       ${actions(n, ctx)}
     </div>
   </div>
@@ -481,7 +481,6 @@ ${sections || `<section class="sec">
     return `<article class="talk">
   <header class="sec talk-head">
     <div class="sec-label talk-meta">
-      <p>${esc(fill(s.seminarNo, { n: t.number }))}</p>
       ${whenBlock(t, ctx)}
       <p>${esc(s.talkIn[t.language] || '')}</p>
     </div>
