@@ -191,7 +191,8 @@ html.js .theme { display: inline-flex; }
 .theme .sw-deep { background: #070E1A; }
 .theme input:checked + .sw { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); border-color: transparent; }
 .theme input:focus-visible + .sw { outline: 2px solid var(--text); outline-offset: 4px; }
-.theme label:hover .sw { border-color: var(--text); }
+@media (hover: hover) { .theme label:hover .sw { border-color: var(--text); } }   /* hover only where there is a pointer: on a phone it would stick after a tap */
+@media (hover: none) and (pointer: coarse) { .theme input:focus-visible + .sw { outline: none; } }
 
 /* Phones. Two quiet rows: the name and the language on top, then the four sections as one ruled bar
    spread across the measure. Every target is at least 44 px tall. The appearance control moves to the
@@ -556,6 +557,7 @@ h1, h2, .prose, .synopsis, .lede, .who, .row-who, .row-title { hyphens: manual; 
 .theme-labelled label { width: auto; height: 2.75rem; gap: 0.5rem; justify-content: flex-start; color: var(--text); }
 .theme-labelled label .sw { flex: none; }
 .theme-labelled input:checked ~ span:last-child { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.3em; }
+.theme-labelled input:checked + .sw { box-shadow: none; border-color: var(--text); }   /* the word says which is chosen; no ring lights up after a tap */
 @media (max-width: 47.99rem) {
   html.js .foot-theme { display: block; }
   .foot-grid { grid-template-columns: 1fr; row-gap: 1.25rem; }
