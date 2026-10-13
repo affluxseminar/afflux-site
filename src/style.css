@@ -141,7 +141,11 @@ time { white-space: nowrap; }
 }
 .skip:focus { top: calc(env(safe-area-inset-top, 0px) + 0.5rem); }
 
-.wrap { max-width: var(--wrap); margin-inline: auto; padding-inline: var(--pad); }
+.wrap {
+  max-width: var(--wrap); margin-inline: auto;
+  /* landscape iPhones: keep clear of the rounded corners and the camera notch (viewport-fit=cover) */
+  padding-inline: max(var(--pad), env(safe-area-inset-left, 0px)) max(var(--pad), env(safe-area-inset-right, 0px));
+}
 
 /* ---------- header ---------- */
 
@@ -189,25 +193,35 @@ html.js .theme { display: inline-flex; }
 .theme input:focus-visible + .sw { outline: 2px solid var(--text); outline-offset: 4px; }
 .theme label:hover .sw { border-color: var(--text); }
 
+/* Phones. Two quiet rows: the name and the language on top, then the four sections as one ruled bar
+   spread across the measure. Every target is at least 44 px tall. The appearance control moves to the
+   footer, where it has words, not three unexplained dots. */
 @media (max-width: 47.99rem) {
   html { scroll-padding-top: 0; }
   .site-head { position: static; }
   .site-head.is-stuck { border-bottom-color: transparent; }
-  .head-grid { grid-template-columns: 1fr auto auto; row-gap: 0.25rem; padding-block: 0.5rem 0.35rem; column-gap: 1rem; }
-  .brand { grid-row: 1; grid-column: 1; }
+  .head-grid { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0; column-gap: 1rem; padding-block: 0.15rem 0; min-height: 0; }
+  .brand { grid-row: 1; grid-column: 1; align-self: stretch; align-items: center; }
+  .brand-mark { font-size: 1.2rem; }
   .brand-sub { display: none; }
-  .theme { grid-row: 1; grid-column: 2; gap: 0.25rem; }
-  .theme label { width: 2rem; height: 2rem; }
-  .lang { grid-row: 1; grid-column: 3; gap: 0.1rem; }
-  .lang a { padding: 0.5rem 0.35rem; }
-  .site-nav { grid-row: 2; grid-column: 1 / -1; justify-content: flex-start; gap: 0 0.2rem; margin-inline: -0.45rem; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .site-nav::-webkit-scrollbar { display: none; }
-  .site-nav a { padding: 0.55rem 0.45rem; border-bottom: 0; flex: none; }
-  .site-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.3em; }
+  html.js .site-head .theme { display: none; }
+  .lang { grid-row: 1; grid-column: 2; gap: 0; margin-right: -0.55rem; }
+  .lang a { padding: 0.8rem 0.55rem; line-height: 1.2; }
+  .site-nav {
+    grid-row: 2; grid-column: 1 / -1;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 0.75rem;
+    border-block: 1px solid var(--rule);
+    font-size: var(--fs-1);
+  }
+  .site-nav a { padding: 0.75rem 0; line-height: 1.3; border-bottom: 0; }
+  .site-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.35em; }
 }
-/* Russian menu words are long: on narrow phones the four items sit in two tidy columns instead of one clipped row. */
-@media (max-width: 26rem) {
-  html:lang(ru) .site-nav { display: grid; grid-template-columns: max-content max-content; column-gap: 1.5rem; overflow: visible; }
+@media (max-width: 24.5rem) { .site-nav { font-size: 0.875rem; } }
+/* Very narrow phones (or a large system font): the Russian words no longer fit on one line, so the
+   bar becomes two ruled rows of two. */
+@media (max-width: 21.9rem) {
+  html:lang(ru) .site-nav { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1rem; }
+  html:lang(ru) .site-nav a:nth-child(n+3) { border-top: 1px solid var(--rule); }
 }
 @media (max-width: 72rem) and (min-width: 48rem) { .brand-sub { display: none; } }
 
@@ -237,7 +251,7 @@ html.js .theme { display: inline-flex; }
   .mast-sub span:nth-child(2) { justify-self: start; text-align: left; }
 }
 @media (max-width: 47.99rem) {
-  .mast { padding-top: calc(var(--space) * 0.35); }
+  .mast { padding-top: 1.6rem; }
   .mast-sub { grid-template-columns: 1fr; grid-template-areas: 'sub' 'conv' 'since'; row-gap: 0.35rem; }
   .mast-sub .mast-since { justify-self: start; }
 }
@@ -314,11 +328,23 @@ main .sec:last-child { padding-bottom: calc(var(--space) * 1.2); }
 .btn-quiet:hover { background: transparent; color: var(--accent); border-color: var(--accent); }
 .more { font-size: var(--fs-1); color: var(--text); text-decoration-color: var(--accent); }
 @media (max-width: 47.99rem) {
-  .actions { gap: 0.85rem 1.25rem; }
-  .btn { padding: 0.85em 1.25em; }
+  .actions { gap: 0.6rem 1.25rem; }
+  .btn { padding: 0.95em 1.25em; }
   .actions > .btn:not(.btn-quiet) { flex: 1 1 100%; max-width: 24rem; text-align: center; }
   .actions > .btn-quiet { flex: 1 1 auto; text-align: center; }
-  .actions .more { padding-block: 0.4rem; }
+  .actions .more { padding-block: 0.7rem; }
+}
+/* Touch screens of any width: links that stand alone get a taller hit area without moving anything. */
+@media (pointer: coarse) {
+  .sec-more a, .foot-col a, .more { display: inline-block; padding-block: 0.65rem; margin-block: -0.65rem; }
+  .row-title { padding-block: 0.5rem; margin-block: -0.5rem; }
+  .actions .more { margin-block: 0; }
+}
+@media (pointer: coarse) and (min-width: 48rem) {
+  .site-nav a { padding-block: 0.75rem; }
+  .lang a { padding: 0.75rem 0.3rem; }
+  .theme label { width: 2.25rem; height: 2.75rem; }
+  .row-links a { display: inline-block; padding-block: 0.65rem; margin-block: -0.65rem; }
 }
 .note { font-size: var(--fs-0); color: var(--text-2); line-height: 1.5; }
 .note-wide { margin-top: 1.5rem; max-width: 60ch; font-size: var(--fs-1); text-wrap: pretty; }
@@ -375,11 +401,14 @@ figure.field { color: var(--field); position: relative; }
 .row-time { font-size: var(--fs-1); color: var(--text-2); font-variant-numeric: tabular-nums; }
 
 @media (max-width: 64rem) {
+  /* tablets and phones held sideways: the title keeps the full width; the links get a line of their own */
   .row {
-    grid-template-columns: 9.5rem minmax(0, 1fr) auto;
-    grid-template-areas: 'date title lang' 'date who links';
+    grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+    grid-template-areas: 'date title lang' 'date who who' 'date links links';
     row-gap: 0.35rem;
   }
+  .row-links { justify-content: flex-start; }
+  .row-links:empty { display: none; }
   .row-date { grid-area: date; }
   .row-title { grid-area: title; }
   .row-who { grid-area: who; }
@@ -396,7 +425,7 @@ figure.field { color: var(--field); position: relative; }
   .row-title { font-size: var(--fs-2); }
   .row-links { justify-content: flex-start; margin-top: 0.1rem; gap: 0.5rem; margin-inline: -0.4rem; }
   .ledger-upcoming .row-links { margin-inline: 0; }
-  .row-links a { padding: 0.45rem 0.4rem; }
+  .row-links a { padding: 0.7rem 0.4rem; margin-block: -0.25rem; }
   .row-links:empty { display: none; }
   .row-time { padding-block: 0.2rem; }
 }
@@ -408,8 +437,9 @@ figure.field { color: var(--field); position: relative; }
 .page-head .lede { margin-top: 1.25rem; }
 
 .prose { max-width: 70ch; font-size: var(--fs-prose); line-height: 1.68; color: var(--text-prose); overflow-wrap: anywhere; text-wrap: pretty; }
-/* Russian running text is hyphenated (the browsers' dictionaries are good); titles are balanced instead. */
-:lang(ru) .prose p, :lang(ru) .synopsis, :lang(ru) .lede, :lang(ru) .who-aff, :lang(ru) .row-aff, .prose p:lang(ru), .synopsis:lang(ru) { hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 7 3 3; }
+/* No automatic hyphenation: phone browsers split Russian words in unexpected places (and names and
+   institutions must never be split). Lines are evened out by text-wrap and non-breaking spaces instead. */
+h1, h2, .prose, .synopsis, .lede, .who, .row-who, .row-title { hyphens: manual; -webkit-hyphens: manual; }
 .prose p { margin: 0; }
 .prose p + p { margin-top: 1.1em; }
 .prose h2 { font: 400 var(--fs-4)/1.25 var(--serif); color: var(--text); margin-bottom: 0.9rem; }
@@ -419,7 +449,8 @@ figure.field { color: var(--field); position: relative; }
 
 .people li { display: flex; flex-direction: column; padding-block: 0.9rem; max-width: 70ch; }
 .people .who-name { font-size: var(--fs-3); font-weight: 500; margin-bottom: 0.2rem; }
-.people .who-aff { font-size: var(--fs-1); line-height: 1.5; }
+.people .who-aff { font-size: var(--fs-1); line-height: 1.45; }
+.people .who-aff + .who-aff { margin-top: 0.4rem; }
 .people li + li { border-top: 1px solid var(--rule); }
 
 /* ---------- talk page ---------- */
@@ -439,9 +470,15 @@ figure.field { color: var(--field); position: relative; }
 .portrait-plate { display: grid; place-items: center; }
 .portrait-plate span { font: 400 3rem/1 var(--serif); color: var(--text-2); letter-spacing: 0.04em; }
 
+.who-photo { display: none; }
 @media (max-width: 47.99rem) {
   .talk-meta { gap: 0.5rem; }
   .portrait { width: 9rem; }
+  /* the speaker's photograph sits beside the name; the large portrait (or the initials plate) is for wide screens */
+  .talk-text > .sec-label { display: none; }
+  .who-wrap { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr); column-gap: 1rem; align-items: center; margin-top: 1.25rem; }
+  .who-wrap .who { margin-top: 0; }
+  .who-photo { display: block; width: 4.75rem; aspect-ratio: 4 / 5; object-fit: cover; filter: grayscale(1) contrast(1.05); background: var(--surface); }
   .form button.btn { width: 100%; max-width: 24rem; }
   .form .check { gap: 0.9rem; padding-block: 0.2rem; }
   .form .check input { width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; }
@@ -512,7 +549,15 @@ figure.field { color: var(--field); position: relative; }
 .foot-brand p { grid-column: 2; }
 .foot-col { grid-column: 2; }
 .foot-col a { color: var(--text); text-decoration-color: var(--accent); }
+/* the appearance control with words (phones; wider screens have the swatches in the header) */
+.foot-theme { display: none; }
+.theme-labelled legend { padding: 0; margin-bottom: 0.15rem; }
+.theme-labelled { flex-wrap: wrap; gap: 0 1rem; }
+.theme-labelled label { width: auto; height: 2.75rem; gap: 0.5rem; justify-content: flex-start; color: var(--text); }
+.theme-labelled label .sw { flex: none; }
+.theme-labelled input:checked ~ span:last-child { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.3em; }
 @media (max-width: 47.99rem) {
+  html.js .foot-theme { display: block; }
   .foot-grid { grid-template-columns: 1fr; row-gap: 1.25rem; }
   .foot-brand { display: block; }
   .foot-brand p { margin-top: 0.5rem; }

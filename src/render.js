@@ -14,11 +14,15 @@
      a number keeps its unit. Applied to every Russian text at render time, so editors type plain
      spaces and the site sets them. Non-breaking spaces are what a typesetter would put there. */
   const NB = '\u00A0';
-  const RU_SHORT = /(?<![^\s(«„"'])(и|а|но|в|во|на|с|со|к|ко|о|об|от|до|за|из|по|не|ни|у|же|ли|бы|под|над|при|для|без|про|то|что|как|или)\s+(?=[а-яёa-z0-9«"(])/gi;
+  /* Only short prepositions and conjunctions are tied to the next word, and particles to the previous
+     one. Longer words (что, как, или) stay free: on a phone, chains of tied words leave ragged lines. */
+  const RU_SHORT = /(?<![^\s(«„"'])(и|а|но|в|во|на|с|со|к|ко|о|об|обо|от|до|за|из|изо|по|не|ни|у|под|над|при|для|без|про)\s+(?=[а-яёa-z0-9«"(])/gi;
+  const RU_PARTICLE = /([а-яё])\s+(же|ли|бы)(?=[\s.,;:!?)»]|$)/gi;
   function typo(text) {
     if (typeof text !== 'string' || !/[а-яё]/i.test(text)) return text;
     return text
       .replace(RU_SHORT, (m, w) => `${w}${NB}`)
+      .replace(RU_PARTICLE, (m, a, p) => `${a}${NB}${p}`)
       .replace(/\s+(—|–)(?=\s)/g, `${NB}$1`)                           // "слово — слово"
       .replace(/(\d)\s+(года|году|год|г\.|ч\.|ч|мин|%|тыс|млн)(?=[\s.,;:)]|$)/g, `$1${NB}$2`)
       .replace(/([А-ЯЁ])\.\s+([А-ЯЁ])\.\s+([А-ЯЁ])/g, `$1.${NB}$2.${NB}$3`);   // initials: В. М. Полтерович
@@ -193,6 +197,12 @@
     <div class="foot-col">
       <p>${esc(s.footerRegister)}<br><a href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
     </div>
+    <div class="foot-col foot-theme">
+      <fieldset class="theme theme-labelled" data-theme-control>
+        <legend>${esc(s.appearance)}</legend>
+        ${['light', 'dark', 'deep'].map((k) => `<label><input type="radio" name="theme-foot" value="${k}"><span class="sw sw-${k}"></span><span>${esc(s.theme[k])}</span></label>`).join('')}
+      </fieldset>
+    </div>
   </div>
 </footer>`;
   }
@@ -205,7 +215,8 @@
     const big = opts && opts.big;
     const iso = t.start.toISOString();
     const raw = fmtLongDate(t.start, lang, t.timezone);
-    const date = raw.charAt(0).toUpperCase() + raw.slice(1);   // the date opens a line of its own: capital weekday in Russian too
+    // the date opens a line of its own: capital weekday in Russian too; «22 октября 2026» never splits, only the weekday may wrap
+    const date = (raw.charAt(0).toUpperCase() + raw.slice(1)).replace(/(\d{1,2}) (\S+) (\d{4})/, '$1\u00A0$2\u00A0$3');
     const time = fmtTime(t.start, t.timezone);
     const tzNote = t.timezone === 'Europe/Moscow' ? s.moscowTime : `(${t.timezone})`;
     return `<p class="when${big ? ' when-big' : ''}">
@@ -231,6 +242,12 @@
       return `<figure class="portrait"><img src="${esc(src)}" alt="${esc(name)}" width="480" height="600" loading="lazy" decoding="async"></figure>`;
     }
     return `<figure class="portrait portrait-plate" aria-hidden="true"><span>${esc(initials(name))}</span></figure>`;
+  }
+  // Phones: a small photograph beside the speaker's name (the large portrait is for wider screens).
+  function miniPortrait(t, ctx) {
+    const { site } = ctx;
+    const src = /^https?:\/\//.test(t.photo) ? t.photo : (site.photoBase || '/photos/') + t.photo;
+    return `<img class="who-photo" src="${esc(src)}" alt="" width="480" height="600" loading="lazy" decoding="async">`;
   }
 
   function actions(t, ctx, opts) {
@@ -467,11 +484,11 @@ ${sections || `<section class="sec">
     </div>
     <div class="sec-body">
       <h1 class="talk-title${title.text.length > 80 ? ' is-long' : ''}"${title.lang ? ` lang="${title.lang}"` : ''}>${esc(title.text)}</h1>
-      ${speakerLine(t, ctx)}
+      ${t.photo ? `<div class="who-wrap">${miniPortrait(t, ctx)}${speakerLine(t, ctx)}</div>` : speakerLine(t, ctx)}
       ${actions(t, ctx, { full: true })}
     </div>
   </header>
-  <div class="sec">
+  <div class="sec talk-text">
     <div class="sec-label">${portrait(t, ctx)}</div>
     <div class="sec-body prose talk-body">
       ${abs.text ? `<h2>${esc(s.abstract)}</h2>\n${paras(abs.text, abs.lang)}` : ''}
