@@ -104,6 +104,7 @@ jobs:
       - run: node build.mjs --content content --content-sha ${{ needs.content.outputs.sha }}
       - run: echo "affluxseminar.org" > dist/CNAME
       - uses: actions/configure-pages@v5
+        with: { enablement: true }
       - uses: actions/upload-pages-artifact@v3
         with: { path: dist }
       - id: deployment
