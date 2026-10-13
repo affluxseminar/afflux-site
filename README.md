@@ -1,10 +1,20 @@
 # AFFLUX — site
 
-Static, bilingual (EN at `/`, RU at `/ru/`), data-driven. One JSON file holds the programme;
-a dependency-free build script renders every page. The public pages make no third-party requests.
-A small private server (`server/`, a Cloudflare Worker) handles registration, sign-in, the
-protected Zoom and recording links, and announcements — see `server/README.md` and
-`docs/ADR-001-identity-and-access.md`.
+Static, bilingual (EN at `/`, RU at `/ru/`), data-driven. One JSON file per seminar holds the
+programme; a dependency-free build script renders every page. The public pages make no third-party
+requests and keep nothing about their visitors.
+
+**Status, 13 October 2026 — the open site.** The owner decided that the site collects no personal
+data at all: no registration, no accounts, no mailing list on the site (Russian law on the
+localisation of personal data and on sign-in methods made the account-based design untenable for
+a seminar run from Russia with this audience). The link to join and the recording are public
+fields of each talk, shown to everyone; the meeting itself does not start before its host
+(Zoom settings). Announcements go out from the seminar's own mailbox; the Subscribe page tells
+people to write to it. The public site is served by GitHub Pages at `affluxseminar.org`
+(reachable from Russia, where Cloudflare-proxied sites are throttled); the Worker in `server/` is
+the admin only, at `admin.affluxseminar.org`, with `REGISTRATION = "closed"`. The registration,
+sign-in and announcement code described further down is dormant, kept for a future that can host
+it lawfully; `docs/ADR-001-identity-and-access.md`, amendment of 13 Oct 2026, records the decision.
 
 ```
 data/site.json        settings, conveners, every UI string in both languages, the About text
@@ -48,18 +58,18 @@ JSON-LD — is generated.
   "title":    { "en": "…", "ru": "…" },
   "abstract": { "en": "…", "ru": "…" },
   "bio":      { "en": "…", "ru": "…" },
-  "join": true,
-  "recording": false,
+  "zoom": "https://us06web.zoom.us/j/…?pwd=…",
+  "video": "https://www.youtube.com/watch?v=…",
   "slides": "",
   "minutes": ""
 }
 ```
 
-`join` and `recording` only switch the buttons on. The Zoom and recording URLs themselves are
-entered in the server admin and never in this file; the build refuses a link there. Normally the
-secretary never sees these files: the admin's programme editor (`/admin/talks`) writes
-`data/talks/<slug>.json`, the photo and the documents to the content repository, and the Zoom and
-recording URLs to the encrypted store, from one form.
+`zoom` is the public invitation link (the build accepts only `https://…zoom.us/…`); the Join button
+shows while it is set and the session has not ended. `video` is the recording (any `https://`
+address); the Recording button and the archive link show while it is set. Normally the secretary
+never sees these files: the admin's programme editor (`/admin/talks`) writes
+`data/talks/<slug>.json`, the photo and the documents to the content repository from one form.
 
 The build validates every entry and stops with a plain message otherwise: `slug` unique, letters,
 digits, dots and hyphens; `date` as `YYYY-MM-DD`; `time` as `HH:MM` Moscow time (add `"timezone"`
@@ -71,15 +81,16 @@ page show Recording, Slides and Minutes links for whatever is present.
 - `speaker` and `affiliation` may be a plain string or `{ "en": …, "ru": … }` when a transliteration is wanted.
 - Missing RU (or EN) text falls back to the other language, marked with the correct `lang` attribute.
 - Portraits are shown in black and white; without a photo the page shows a plate with initials.
-- The Join button appears until the session ends, Recording and Slides afterwards. Set the flag,
-  then enter the URL in the server admin; both can be done in either order.
+- The Join button appears until the session ends, Recording and Slides afterwards; each only when
+  its field is filled, so there are no empty buttons.
 - Blank lines in `abstract` and `bio` become paragraphs. An optional `"summary": { "en", "ru" }`
   replaces the automatic synopsis shown on the front page.
 
 With no entries the site shows "Programme forthcoming" and an empty archive; nothing is invented.
 
-Past seminars move to the Archive at the next build. The workflow builds nightly, and `client.js`
-retires the join link the moment a session ends, before the rebuild.
+Past seminars move to the Archive at the next build. The workflow rebuilds whenever the programme
+changes (polled every 10 minutes), and `client.js` retires the join link the moment a session ends,
+before the rebuild.
 
 ## Two repositories
 
@@ -99,9 +110,11 @@ credentials, and the live site's `content-version.txt` — not a cache — tells
 deployed. A compromised owner account can change everything — which is why that account has
 passkeys and nothing else.
 
-## Registration, protected links, announcements
+## Registration, protected links, announcements (dormant since 13 Oct 2026)
 
-Joining a session and watching a recording require a free account: registration by magic link,
+This section describes the account-based mode, switched off on the live site (`REGISTRATION =
+"closed"` in `server/wrangler.toml`; see the status note at the top). In that mode joining a
+session and watching a recording require a free account: registration by magic link,
 no password. The two announcement lists (English-language sessions, Russian-language sessions) are
 optional checkboxes on the same form and toggles on the account page. The static site knows nothing
 about accounts: it only links to `/go/join/<slug>/`, `/go/recording/<slug>/` and `/register/`,
@@ -149,14 +162,17 @@ only outbound request a visitor's browser makes is the subscription form's POST 
 
 ## Deployment
 
-One Cloudflare Worker serves both the static site (as assets, from `dist/`) and the dynamic paths.
-The included workflow builds and deploys on push and nightly at 03:17 UTC with two repository
-secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`). The static site alone still works on
-any static host (`dist/`), with the account features absent.
+`.github/workflows/build.yml` builds the site from the content repository, runs the server's
+end-to-end checks, publishes `dist/` to GitHub Pages (the public site, custom domain
+`affluxseminar.org`, HTTPS enforced — Settings → Pages, source "GitHub Actions") and deploys the
+Worker (the admin, `admin.affluxseminar.org`) with two repository secrets (`CLOUDFLARE_API_TOKEN`,
+`CLOUDFLARE_ACCOUNT_ID`). It runs on push, on demand, and every 10 minutes when the programme
+changed. DNS, Cloudflare Access on the admin and the rest of the Cloudflare side are set by
+`tools/cf-setup.mjs` (the "Cloudflare setup" workflow). The static site alone works on any static
+host.
 
 Before going live, set in `data/site.json`: `baseUrl` (canonical URLs, hreflang, sitemap, OpenGraph)
-and `email`. Then in the content repository, `admin/config.yml`: `repo`, `base_url`, `site_url`; and follow
-`server/README.md` → "Setting up".
+and `email`; then follow `server/README.md` → "Setting up".
 
 ## What the build produces for search and sharing
 

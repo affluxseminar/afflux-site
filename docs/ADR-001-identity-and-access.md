@@ -1,6 +1,7 @@
 # ADR-001 — Identity, registration, protected links and mailing
 
-Status: **Accepted (2026-09-26), implemented in `server/`; amended 2026-09-27** — see
+Status: **Superseded in operation (2026-10-13)** — the live site runs without accounts; see the
+last amendment. Earlier: **Accepted (2026-09-26), implemented in `server/`; amended 2026-09-27** — see
 "Amendment" at the end: the managed identity provider was dropped in favour of an in-house
 implementation on Cloudflare, and Postmark in favour of SMTP2GO. The text below records the
 original reasoning; the amendment records what is built.
@@ -353,3 +354,46 @@ Unchanged by decision: S01, D04. Nothing is staging-verified yet.
 | Second domain | affluxseminar.com: redirect-only zone, SPF `-all`, DMARC reject, no MX (`docs/DNS.md`) | documented |
 
 Unchanged by decision: S01, D04. Nothing is staging-verified yet.
+
+## Amendment (2026-10-13): the open site — no personal data on the site at all
+
+**Why.** Two facts surfaced on the first live day. (1) Reachability: since June 2025 Russian
+providers cut connections to Cloudflare-proxied sites after about 16 kB (Cloudflare's own
+statement; Kommersant/Habr, Dec 2025). The 12 Oct measurements of speed.cloudflare.com had
+misled us; the live site did not open from either of the owner's networks without a VPN. GitHub
+Pages did open at once. (2) Law: the account-based design stores addresses, names and
+affiliations of Russian citizens outside Russia (152-FZ art. 18(5), localisation) and signs
+people in by a link sent to any mailbox, which the 2026 law on authorisation methods does not
+list; the audience includes people connected with government, so the list itself is sensitive
+wherever it lives. Fines are modest for an individual, but the realistic consequences — a block
+by Roskomnadzor, or questions put to the conveners' institute — are not. The owner's decision,
+13 Oct: the site holds no personal data at all, and is served from GitHub Pages.
+
+**What changed.**
+- Public site: GitHub Pages, custom domain `affluxseminar.org`, DNS only (grey cloud); `www`
+  CNAME to `affluxseminar.github.io`. The .com stays a Cloudflare redirect (a 301 is small enough).
+- Registration, sign-in, accounts, protected links, the comments form and announcements are
+  switched off (`REGISTRATION = "closed"`): their paths answer with a redirect to the Subscribe
+  page (GET) or 404; the admin shows the programme editor only. The code stays, dormant.
+- The Zoom invitation (`zoom`) and the recording (`video`) are public fields of the talk in the
+  content repository, shown on the talk page to everyone. The build validates them (`zoom.us`
+  only; `https://` only). Protection of the meeting moved to Zoom: no joining before the host,
+  passcode embedded in the link; the host admits people and can switch on the waiting room.
+- Subscribe page: "write to seminar@affluxseminar.org"; the mailbox is read in Gmail through
+  Cloudflare Email Routing; announcements go out from the conveners'/secretary's own mailbox, BCC.
+  An external mailing service (a Russian one, for the data to stay in Russia) can be added later
+  without touching the site.
+- The Worker is the admin only, on `admin.affluxseminar.org` behind Cloudflare Access (one-time
+  code to the owner's mailbox); every request passes through it, the static assets the admin pages
+  use come from the assets binding, other paths are redirected to the public site, `X-Robots-Tag:
+  noindex`. The three D1 databases stay (empty) with their keys; the key secrets are still required
+  by the Worker's startup and used by the admin's throttles.
+- Deploy: `build.yml` publishes the same build to GitHub Pages and the Worker to Cloudflare; the
+  programme is polled every 10 minutes (the code repository is public, so Actions minutes are free).
+  `tools/cf-setup.mjs` gained `ech` (off), `subdomain` and `pages` steps.
+
+**What the earlier reviews protected and what remains.** The threat model of this ADR concerned
+a store of participants' addresses; that store is now empty and unused. What remains in scope:
+the integrity of the programme (Contents-only token on the content repository, Access on the
+admin, same-origin checks, upload validation) and the privacy of the mailbox the subscribers write
+to, which is ordinary correspondence outside the site.

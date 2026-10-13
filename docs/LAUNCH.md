@@ -2,6 +2,13 @@
 
 Order of operations for one person doing everything, from Moscow, honestly (no VPN, real details).
 
+**13 October 2026 — where things stand.** The site is live at affluxseminar.org as an open site
+without registration (see README "Status" and ADR-001, last amendment). Hosting changed after the
+first day: Cloudflare-proxied pages are throttled in Russia (section 0 below was wrong about that),
+so the public site is on GitHub Pages and only the admin (admin.affluxseminar.org) stays on
+Cloudflare. Steps 2 and 3 below that concern registration, SMTP2GO and the six Worker secrets are
+no longer needed for launch: SMTP2GO only if announcements are to be sent "as" seminar@ from Gmail.
+
 ## 0. Where to host — decide first, test before paying
 
 Since June 2025 Russian providers throttle connections to many foreign networks: Cloudflare,
