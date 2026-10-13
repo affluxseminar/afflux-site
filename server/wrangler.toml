@@ -27,6 +27,7 @@ run_worker_first = ["/register*", "/signin*", "/account*", "/go/*", "/api/*", "/
 crons = ["17 4 * * *"]
 
 [vars]
+REGISTRATION = "closed"                             # the public site collects nothing: registration, sign-in and accounts are shut
 SITE_BASE = "https://affluxseminar.org"
 SMTP2GO_BASE_URL = "https://api.smtp2go.com"
 MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"    # the one address: sign-in links, announcements, replies

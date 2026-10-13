@@ -70,8 +70,7 @@
         "upcoming": "Upcoming",
         "archive": "Archive",
         "about": "About",
-        "register": "Register",
-        "account": "Account"
+        "subscribe": "Subscribe"
       },
       "skip": "Skip to content",
       "langSwitch": "Language",
@@ -115,7 +114,7 @@
       "conveners": "Conveners",
       "navLabel": "Main",
       "programmeForthcoming": "Programme forthcoming",
-      "announcedShortly": "The next seminar will be announced shortly. Announcements reach the mailing list first.",
+      "announcedShortly": "The next seminar will be announced shortly; subscribers receive the announcement by email.",
       "archiveEmpty": "The archive opens with the first recorded session.",
       "aboutShort": "About the seminar",
       "readMore": "More about the seminar",
@@ -126,13 +125,9 @@
         "deep": "Deep"
       },
       "synopsis": "Synopsis",
-      "joinLater": "The link to join will appear here and in the announcement.",
-      "registerCta": "Register",
-      "footerRegister": "A free registration gives access to sessions and recordings.",
-      "joinGateNote": "Joining requires a free registration on this site; you will be returned here after signing in.",
-      "recordingGateNote": "Recordings are available to registered participants.",
-      "serverOnlyTitle": "Available on the live site",
-      "serverOnlyText": "Registration, sign-in and protected links are served by the private application server and are not part of this static design preview.",
+      "joinLater": "The link to join will appear here before the session.",
+      "registerCta": "Subscribe to announcements",
+      "footerRegister": "Announcements of each session reach the mailing list about a week ahead.",
       "account": {
         "registerTitle": "Register",
         "registerLead": "A free account is needed to join sessions and watch recordings. Registration takes one email: we send you a link, you open it, and you are in. No password.",
@@ -208,7 +203,14 @@
       "minutes": "Minutes of the session (PDF)",
       "minutesShort": "Minutes",
       "fieldCaptionHtml": "Streamlines of a plane potential flow: a uniform stream superimposed with a point sink and a vortex at the same point; near the sink the lines become logarithmic spirals. <i>Afflux</i>: a flowing towards.",
-      "fieldCaptionSourceHtml": "The same flow with the sink turned into a source. Your letter is on its way."
+      "fieldCaptionSourceHtml": "The same flow with the sink turned into a source. Your letter is on its way.",
+      "joinOpenNote": "Open to all. Participants are admitted from the waiting room shortly before the start.",
+      "subscribeTitle": "Subscribe",
+      "subscribeLead": "Announcements of the sessions are sent by email about a week ahead, with the title, the abstract and the link to join.",
+      "subscribeHow": "To subscribe, write to the seminar address. Please say whether you would like announcements of English-language sessions, Russian-language sessions, or both.",
+      "subscribeButton": "Write to subscribe",
+      "subscribeSubject": "Subscription to AFFLUX announcements",
+      "subscribeNote": "The address is used only for the seminar’s own mailings and is never published or passed on. To unsubscribe, write to the same address. This site itself keeps no data about its visitors: no accounts, no forms, no analytics."
     },
     "ru": {
       "subtitle": "Семинар «Экономика энергетики и окружающей среды»",
@@ -219,8 +221,7 @@
         "upcoming": "Ближайшие",
         "archive": "Архив",
         "about": "О семинаре",
-        "register": "Регистрация",
-        "account": "Аккаунт"
+        "subscribe": "Подписка"
       },
       "skip": "К содержанию",
       "langSwitch": "Язык",
@@ -264,7 +265,7 @@
       "conveners": "Руководители семинара",
       "navLabel": "Основные разделы",
       "programmeForthcoming": "Программа готовится",
-      "announcedShortly": "Ближайший семинар будет объявлен в ближайшее время. Анонс сначала приходит подписчикам рассылки.",
+      "announcedShortly": "Следующее заседание будет объявлено в скором времени; подписчики получат анонс по почте.",
       "archiveEmpty": "Архив откроется с первой записанной сессии.",
       "aboutShort": "О семинаре",
       "readMore": "Подробнее о семинаре",
@@ -275,13 +276,9 @@
         "deep": "Глубокая"
       },
       "synopsis": "Кратко",
-      "joinLater": "Ссылка для подключения появится здесь и в анонсе.",
-      "registerCta": "Зарегистрироваться",
-      "footerRegister": "Бесплатная регистрация открывает доступ к заседаниям и записям.",
-      "joinGateNote": "Для подключения нужна бесплатная регистрация на сайте; после входа вы вернётесь сюда.",
-      "recordingGateNote": "Записи доступны зарегистрированным участникам.",
-      "serverOnlyTitle": "Доступно на рабочем сайте",
-      "serverOnlyText": "Регистрация, вход и защищённые ссылки обслуживаются приватным сервером приложения и не входят в это статическое дизайн-превью.",
+      "joinLater": "Ссылка для подключения появится здесь перед заседанием.",
+      "registerCta": "Подписаться на анонсы",
+      "footerRegister": "Анонс каждого заседания приходит подписчикам рассылки примерно за неделю.",
       "account": {
         "registerTitle": "Регистрация",
         "registerLead": "Для подключения к заседаниям и просмотра записей нужен бесплатный аккаунт. Регистрация — одно письмо: мы присылаем ссылку, вы открываете её — и вы на сайте. Без пароля.",
@@ -357,19 +354,26 @@
       "minutes": "Протокол заседания (PDF)",
       "minutesShort": "Протокол",
       "fieldCaptionHtml": "Линии тока плоского потенциального течения: суперпозиция однородного потока, точечного стока и вихря в той же точке; вблизи стока линии тока переходят в логарифмические спирали. <i>Afflux</i> — приток, течение к точке.",
-      "fieldCaptionSourceHtml": "То же течение, но сток обращён в источник. Письмо в пути."
+      "fieldCaptionSourceHtml": "То же течение, но сток обращён в источник. Письмо в пути.",
+      "joinOpenNote": "Заседание открытое. Участников впускают из зала ожидания незадолго до начала.",
+      "subscribeTitle": "Подписка",
+      "subscribeLead": "Анонсы заседаний рассылаются по почте примерно за неделю: название, аннотация и ссылка для подключения.",
+      "subscribeHow": "Чтобы подписаться, напишите на адрес семинара. Укажите, пожалуйста, анонсы каких заседаний вы хотите получать: на русском языке, на английском или все.",
+      "subscribeButton": "Написать, чтобы подписаться",
+      "subscribeSubject": "Подписка на анонсы AFFLUX",
+      "subscribeNote": "Адрес используется только для рассылок семинара, не публикуется и никому не передаётся. Чтобы отписаться, напишите на тот же адрес. Сам сайт не хранит никаких данных о посетителях: здесь нет аккаунтов, форм и счётчиков."
     }
   },
   "about": {
     "en": [
       "AFFLUX is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky. It meets online and brings together economists, physicists, engineers and policy researchers working on energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
-      "Talks are given in English or in Russian. Announcements are sent in the language of the talk: registered participants choose whether to receive announcements of English-language sessions, of Russian-language sessions, or both; the two lists are separate, and no announcement is sent twice. The choice is a setting of the account, not a separate subscription — it can be switched on or off at any time, with no further confirmation, and every announcement carries a link to unsubscribe in one step. The link to join is published on this site for registered participants.",
-      "Recordings are made available to registered participants with the speakers' permission, usually within a few days of the session; slides and the minutes of the discussion are published as they arrive. Registered participants can send comments and suggestions to the conveners from their account."
+      "Talks are given in English or in Russian. Sessions are open: the link to join is published on the page of each talk shortly before it begins, and announcements are sent to the mailing list about a week ahead.",
+      "Recordings are published with the speakers' permission, usually within a few days of the session; slides and the minutes of the discussion are published as they arrive. Comments and suggestions are welcome at the seminar address."
     ],
     "ru": [
       "AFFLUX — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского. Семинар проходит онлайн и объединяет экономистов, физиков, инженеров и исследователей политики, работающих с энергетическими рынками, природными ресурсами и окружающей средой, сложными системами, технологическими изменениями и оптимизацией.",
-      "Доклады читаются на английском или на русском языке. Анонс приходит на языке доклада: зарегистрированные участники сами выбирают, получать анонсы англоязычных заседаний, русскоязычных или обоих; это два раздельных списка, и ни один анонс не дублируется. Выбор — это настройка аккаунта, а не отдельная подписка: включить или отключить анонсы можно в любой момент без повторных подтверждений, а в каждом письме есть ссылка, чтобы отписаться одним нажатием. Ссылка для подключения публикуется на сайте для зарегистрированных участников.",
-      "Записи открываются зарегистрированным участникам с согласия докладчиков, как правило, в течение нескольких дней после заседания; презентации и протоколы обсуждений публикуются по мере поступления. Зарегистрированные участники могут направить руководителям семинара комментарии и пожелания из своего аккаунта."
+      "Доклады читаются на английском или на русском языке. Заседания открытые: ссылка для подключения публикуется на странице доклада незадолго до начала, а анонс рассылается подписчикам примерно за неделю.",
+      "Записи публикуются с согласия докладчиков, как правило, в течение нескольких дней после заседания; презентации и протоколы обсуждений — по мере поступления. Комментарии и пожелания руководителям семинара можно направить на адрес семинара."
     ]
   },
   "since": 2011,

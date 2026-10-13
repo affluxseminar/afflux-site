@@ -231,6 +231,7 @@ const routes = [
   { kind: 'upcoming', path: '/upcoming/' },
   { kind: 'archive', path: '/archive/' },
   { kind: 'about', path: '/about/' },
+  { kind: 'subscribe', path: '/subscribe/' },
   ...talks.map((t) => ({ kind: 'talk', slug: t.slug, path: R.talkPath(t) }))
 ];
 

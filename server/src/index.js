@@ -15,8 +15,20 @@ function route(req) {
   return { url, p, lang, m: req.method };
 }
 
+/* The public site keeps no data about visitors: with REGISTRATION = "closed" every participant-facing
+   dynamic path (registration, sign-in, account, protected links, their APIs) is shut. GET requests are
+   sent to the Subscribe page; anything else gets 404. The admin and the health check are unaffected. */
+const PARTICIPANT_PATHS = /^\/(register|signin|account|go|api)(\/|$)/;
+function closedRegistration(env, p, lang, m) {
+  if (env.REGISTRATION !== 'closed' || p === '/api/health' || !PARTICIPANT_PATHS.test(p)) return null;
+  if (m === 'GET' || m === 'HEAD') return new Response(null, { status: 302, headers: { Location: `${lang === 'ru' ? '/ru' : ''}/subscribe/` } });
+  return new Response('Not found', { status: 404 });
+}
+
 async function handle(req, env) {
   const { p, lang, m } = route(req);
+  const closed = closedRegistration(env, p, lang, m);
+  if (closed) return closed;
 
   if (m === 'GET' || m === 'HEAD') {
     if (p === '/api/health') return new Response('ok');

@@ -148,11 +148,9 @@
     const { lang, site } = ctx;
     const s = site.strings[lang];
     const other = lang === 'en' ? 'ru' : 'en';
-    const nav = ['upcoming', 'archive', 'about', 'register'].map((k) => {
-      const active = page.kind === k || (k === 'register' && ['account', 'signin'].includes(page.kind));
-      const cur = active ? ' aria-current="page"' : '';
-      const extra = k === 'register' ? ` data-nav-account="${esc(s.nav.account)}" data-href-account="${ctx.url(lang, '/account/')}"` : '';
-      return `<a href="${ctx.url(lang, `/${k}/`)}"${cur}${extra}>${esc(s.nav[k])}</a>`;
+    const nav = ['upcoming', 'archive', 'about', 'subscribe'].map((k) => {
+      const cur = page.kind === k ? ' aria-current="page"' : '';
+      return `<a href="${ctx.url(lang, `/${k}/`)}"${cur}>${esc(s.nav[k])}</a>`;
     }).join('');
     const samePath = page.path; // language-neutral path of this page
     return `<header class="site-head${page.kind === 'home' ? ' is-home' : ''}" id="top">
@@ -193,7 +191,7 @@
       <p>${esc(s.contact)}<br><a href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
     </div>
     <div class="foot-col">
-      <p>${esc(s.footerRegister)}<br><a href="${ctx.url(lang, '/register/')}">${esc(s.nav.register)}</a></p>
+      <p>${esc(s.footerRegister)}<br><a href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
     </div>
   </div>
 </footer>`;
@@ -240,13 +238,13 @@
     const full = opts && opts.full;
     const out = [];
     if (t.status !== 'past') {
-      if (t.join) out.push(`<a class="btn" href="${ctx.url(lang, `/go/join/${t.slug}/`)}" data-join>${esc(t.status === 'live' ? s.live : s.join)}</a>`);
-      if (full) out.push(`<span class="note">${esc(t.join ? s.joinGateNote : s.joinLater)}</span>`);
+      if (t.zoom) out.push(`<a class="btn" href="${esc(t.zoom)}" rel="noopener" data-join>${esc(t.status === 'live' ? s.live : s.join)}</a>`);
+      if (full) out.push(`<span class="note">${esc(t.zoom ? s.joinOpenNote : s.joinLater)}</span>`);
     } else {
-      if (t.recording) out.push(`<a class="btn" href="${ctx.url(lang, `/go/recording/${t.slug}/`)}">${esc(s.recording)}</a>`);
+      if (t.video) out.push(`<a class="btn" href="${esc(t.video)}" rel="noopener">${esc(s.recording)}</a>`);
       if (t.slides) out.push(`<a class="btn btn-quiet" href="${esc(fileUrl(site, t.slides))}">${esc(s.slides)}</a>`);
       if (t.minutes) out.push(`<a class="btn btn-quiet" href="${esc(fileUrl(site, t.minutes))}">${esc(s.minutes)}</a>`);
-      if (full) out.push(`<span class="note">${esc(t.recording ? s.recordingGateNote : s.noRecording)}</span>`);
+      if (full && !t.video) out.push(`<span class="note">${esc(s.noRecording)}</span>`);
     }
     if (!full) out.push(`<a class="more" href="${ctx.url(lang, talkPath(t))}">${esc(s.details)}</a>`);
     return `<p class="actions" data-talk-start="${t.start.toISOString()}" data-talk-end="${t.end.toISOString()}" data-soon="${esc(s.recordingSoon)}" data-live="${esc(s.live)}">${out.join('\n  ')}</p>`;
@@ -264,7 +262,7 @@
       let links = '';
       if (mode === 'past') {
         const parts = [];
-        if (t.recording) parts.push(`<a href="${ctx.url(lang, `/go/recording/${t.slug}/`)}">${esc(s.recordingShort)}</a>`);
+        if (t.video) parts.push(`<a href="${esc(t.video)}" rel="noopener">${esc(s.recordingShort)}</a>`);
         if (t.slides) parts.push(`<a href="${esc(fileUrl(site, t.slides))}">${esc(s.slidesShort)}</a>`);
         if (t.minutes) parts.push(`<a href="${esc(fileUrl(site, t.minutes))}">${esc(s.minutesShort)}</a>`);
         links = parts.join('');
@@ -304,11 +302,11 @@
       nextHtml = `<div class="next-main">
   <h3 class="empty-title">${esc(s.programmeForthcoming)}</h3>
   <p class="lede">${esc(s.announcedShortly)}</p>
-  <p class="actions"><a class="btn" href="${ctx.url(lang, '/register/')}">${esc(s.registerCta)}</a></p>
+  <p class="actions"><a class="btn" href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
 </div>`;
     }
     const following = model.upcoming.slice(1, 4);
-    const recent = model.past.filter((t) => t.recording).slice(0, 4);
+    const recent = model.past.filter((t) => t.video).slice(0, 4);
 
     return `<section class="mast" aria-label="AFFLUX">
   <h1 class="wordmark" aria-label="AFFLUX"><span aria-hidden="true">A</span><span aria-hidden="true">F</span><span aria-hidden="true">F</span><span aria-hidden="true">L</span><span aria-hidden="true">U</span><span aria-hidden="true">X</span></h1>
@@ -376,7 +374,7 @@ ${n ? lead : `<section class="sec">
   <div class="sec-body">
     <h2 class="empty-title">${esc(s.programmeForthcoming)}</h2>
     <p class="lede">${esc(s.announcedShortly)}</p>
-    <p class="actions"><a class="btn" href="${ctx.url(lang, '/register/')}">${esc(s.registerCta)}</a></p>
+    <p class="actions"><a class="btn" href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
   </div>
 </section>`}
 ${rest.length ? `<section class="sec">
@@ -435,12 +433,21 @@ ${sections || `<section class="sec">
 </section>`;
   }
 
-  function serverOnlyPage(ctx) {
+  function subscribePage(ctx) {
     const { lang, site } = ctx;
     const s = site.strings[lang];
+    const mail = `mailto:${site.email}?subject=${encodeURIComponent(s.subscribeSubject)}`;
     return `<section class="page-head">
-  <h1 class="page-title">${esc(s.serverOnlyTitle)}</h1>
-  <p class="lede">${esc(s.serverOnlyText)}</p>
+  <h1 class="page-title">${esc(s.subscribeTitle)}</h1>
+  <p class="lede">${esc(s.subscribeLead)}</p>
+</section>
+<section class="sec">
+  <div class="sec-label"></div>
+  <div class="sec-body prose">
+    <p>${esc(s.subscribeHow)}</p>
+    <p class="actions"><a class="btn" href="${esc(mail)}">${esc(s.subscribeButton)}</a><a class="more" href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
+    <p class="note">${esc(s.subscribeNote)}</p>
+  </div>
 </section>`;
   }
 
@@ -493,10 +500,8 @@ ${sections || `<section class="sec">
     if (p === '/ru' || p.startsWith('/ru/')) { lang = 'ru'; p = p.slice(3) || '/'; }
     if (!p.endsWith('/')) p += '/';
     if (p === '/') return { lang, kind: 'home', path: '/' };
-    const m = p.match(/^\/(upcoming|archive|about)\/$/);
+    const m = p.match(/^\/(upcoming|archive|about|subscribe)\/$/);
     if (m) return { lang, kind: m[1], path: p };
-    const sv = p.match(/^\/(register|signin|account|go)\//);
-    if (sv) return { lang, kind: 'server', path: p };
     const tm = p.match(/^\/talks\/([A-Za-z0-9._-]+)\/$/);
     if (tm) return { lang, kind: 'talk', slug: tm[1], path: p };
     return { lang, kind: '404', path: p };
@@ -531,10 +536,10 @@ ${sections || `<section class="sec">
         description = s.description;
         main = aboutPage(c, model);
         break;
-      case 'server':
-        title = `${s.serverOnlyTitle}, ${base}`;
-        description = s.serverOnlyText;
-        main = serverOnlyPage(c);
+      case 'subscribe':
+        title = `${s.subscribeTitle}, ${base}`;
+        description = s.subscribeLead;
+        main = subscribePage(c);
         break;
       case 'talk': {
         talk = model.all.find((t) => t.slug === route.slug) || null;

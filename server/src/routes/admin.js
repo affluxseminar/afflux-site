@@ -68,8 +68,18 @@ export async function admin(req, env, sub) {
   const isPost = req.method === 'POST';
   if (sub === '/talks' || sub.startsWith('/talks/')) return talksAdmin(req, env, sub, who.email);
 
+  /* With registration closed the site keeps nothing about participants, so the admin is the
+     programme editor and nothing else; the other pages stay out of reach. */
+  const closed = env.REGISTRATION === 'closed';
+  if (closed && sub !== '' && sub !== '/') return redirect('/admin/talks');
+
   if (sub === '' || sub === '/') {
     if (isPost) return new Response('Method not allowed', { status: 405 });
+    if (closed) {
+      const main = `<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body"><p class="actions"><a class="btn" href="/admin/talks/new">New talk</a><a class="more" href="/admin/talks">All talks</a></p>
+<p class="note">The public site collects nothing about its visitors: no accounts, no registration, no mailing list. Announcements go out from the seminar's own mailbox.</p></div></section>`;
+      return html(P.adminPage({ title: 'Overview', main, who: who.email, closed }));
+    }
     const c = await users.counts(env);
     const recent = await sends.recent(env);
     const main = `<section class="sec"><h2 class="sec-label">Accounts</h2><div class="sec-body"><dl class="kv">

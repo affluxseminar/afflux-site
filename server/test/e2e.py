@@ -59,7 +59,7 @@ with sync_playwright() as p:
     ctx=b.new_context(); stub(ctx); pg=ctx.new_page()
     resp=pg.goto(B+'/go/join/2026-10-15-test/')
     ok(resp.status==401 and 'zoom.example' not in pg.content(), f'anonymous /go -> gate {resp.status}, destination hidden')
-    ok(pg.evaluate("document.querySelector('a[data-nav-account]').textContent")=='Register', 'nav shows Register when signed out')
+    ok(pg.evaluate("!document.querySelector('a[data-nav-account]') && !!document.querySelector('.site-nav a[href$=\"/subscribe/\"]')"), 'nav has Subscribe and no account link (the public site keeps no accounts)')
     pg.click('a.btn:has-text("Register")'); ok(pg.url.endswith('/register/'), 'gate -> register page')
     pg.fill('#name','Test Person'); pg.fill('#email','person@example.org'); pg.fill('#affiliation','Test Institute'); pg.check('#list_en')
     pg.click('button:has-text("Register")'); pg.wait_for_url('**/api/register'); pg.wait_for_timeout(200)
@@ -76,7 +76,7 @@ with sync_playwright() as p:
     ok(r.status==303 and r.headers.get('location')=='/go/join/2026-10-15-test/', f'after verify returned to resource path -> {r.status}')
     r=pg.request.get(B+'/go/join/2026-10-15-test/', max_redirects=0); ok(r.status==303 and r.headers.get('location')=='https://zoom.example.org/j/123', 'resource path now redirects to Zoom')
     resp=pg.goto(link); ok(resp.status==400, 'token is single-use (link no longer works)')
-    pg.goto(B+'/'); pg.wait_for_timeout(200); ok(pg.evaluate("document.querySelector('a[data-nav-account]').textContent")=='Account', 'nav shows Account when signed in')
+    pg.goto(B+'/'); pg.wait_for_timeout(200); ok(pg.evaluate("!document.querySelector('a[data-nav-account]')"), 'static nav carries no account link when signed in either')
     pg.goto(B+'/account/'); ok(pg.input_value('#name')=='Test Person' and pg.is_checked('#list_en') and not pg.is_checked('#list_ru'), 'account shows profile and prefs')
     cookies={c['name']:c for c in ctx.cookies()}
     ok(cookies['afflux_session']['httpOnly'] and cookies['afflux_session']['sameSite']=='Lax' and not cookies['afflux_in']['httpOnly'], 'session cookie HttpOnly+Lax, flag cookie readable')
