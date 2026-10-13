@@ -72,6 +72,7 @@ export default {
       if (e && e.code === 'E_KEY_GENERATION') return withHeaders(new Response('Temporarily unavailable, please try again in a moment', { status: 503, headers: { 'Retry-After': '5' } }));
       // Only an error code reaches the logs — never a message that could carry a token, an address or a name.
       console.error('afflux-server error', (e && e.code) || (e && e.status) || 'E_UNHANDLED');
+      if (env.DEBUG_ERRORS === 'yes-local-only') console.error(e && e.stack);   // dev environment only (wrangler.toml); never in production
       return withHeaders(new Response('Server error', { status: 500 }));
     }
   },

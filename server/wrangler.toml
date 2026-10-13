@@ -74,6 +74,7 @@ enabled = false
 name = "afflux-server-staging"
 routes = [ { pattern = "test.affluxseminar.org", custom_domain = true } ]
 [env.staging.vars]
+REGISTRATION = "open"
 SITE_BASE = "https://test.affluxseminar.org"
 SMTP2GO_BASE_URL = "https://api.smtp2go.com"
 MAIL_FROM = "AFFLUX test <seminar@affluxseminar.org>"
@@ -110,6 +111,8 @@ crons = ["17 4 * * *"]
 workers_dev = true
 routes = []
 [env.dev.vars]
+REGISTRATION = "open"
+DEBUG_ERRORS = "yes-local-only"
 SITE_BASE = "http://localhost:8788"
 SMTP2GO_BASE_URL = "http://127.0.0.1:9101"
 MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"

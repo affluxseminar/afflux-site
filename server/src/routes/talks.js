@@ -1,9 +1,9 @@
 /* The programme editor: one form per talk, behind Cloudflare Access like the rest of /admin.
-   Public fields go to the content repository (data/talks/<slug>.json, photos/, files/) through
-   the GitHub Contents API; the Zoom and recording URLs go to the encrypted links store and never
-   to GitHub. The site rebuilds itself from the repository within a few minutes. */
+   Everything goes to the content repository (data/talks/<slug>.json, photos/, files/) through the
+   GitHub Contents API. The seminar is open (owner's decision, 13 Oct 2026): the Zoom invitation and
+   the recording are public fields of the talk, shown on its page to everyone; the site keeps nothing
+   about participants. The site rebuilds itself from the repository within minutes. */
 import { content } from '../github.js';
-import { links } from '../db.js';
 import { html, redirect } from './auth.js';
 import { clean, allowedLinkHost, readForm, MAX_UPLOAD_BODY } from '../security.js';
 import * as P from '../pages.js';
@@ -14,6 +14,8 @@ const PHOTO_EXT = /\.(jpe?g|png|webp)$/i;
 const DOC_EXT = /\.(pdf|pptx?)$/i;
 const DOC_NAME = /^[A-Za-z0-9._-]+\.(pdf|pptx?)$/i;
 const URL_RE = /^https:\/\/[^\s"'<>]+$/;
+/* A Zoom invitation: https on zoom.us (or, in the dev environment, the test host from LINK_HOSTS). */
+const zoomLink = (env, u) => URL_RE.test(u) && (/^https:\/\/([a-z0-9-]+\.)*zoom\.us\//i.test(u) || (allowedLinkHost(env, u) && /zoom/i.test(new URL(u).hostname)));
 const PHOTO_MAX = 8 * 1024 * 1024, DOC_MAX = 20 * 1024 * 1024;
 const TRANSLIT = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
 const translit = (s) => String(s).toLowerCase().replace(/[а-яё]/g, (c) => TRANSLIT[c] || '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -81,7 +83,7 @@ ${fld('speaker', 'Speaker', txt('speaker', v.speaker, ' required autocomplete="o
 ${fld('speaker_ru', 'Speaker in Russian (optional)', txt('speaker_ru', v.speaker_ru))}
 ${fld('affiliation', 'Affiliation', txt('affiliation', v.affiliation))}
 ${fld('affiliation_ru', 'Affiliation in Russian (optional)', txt('affiliation_ru', v.affiliation_ru))}
-${fld('language', 'Talk language', `<select id="language" name="language"><option value="en"${v.language !== 'ru' ? ' selected' : ''}>English</option><option value="ru"${v.language === 'ru' ? ' selected' : ''}>Russian</option></select>`, 'Decides which list the announcement goes to.')}
+${fld('language', 'Talk language', `<select id="language" name="language"><option value="en"${v.language !== 'ru' ? ' selected' : ''}>English</option><option value="ru"${v.language === 'ru' ? ' selected' : ''}>Russian</option></select>`, 'The language the talk is given in; shown on its page.')}
 ${fld('number', 'Seminar number', `<input id="number" type="number" name="number" min="1" step="1" value="${esc(v.number || '')}">`, 'Leave empty for the next number.')}
 ${fld('slug', 'Page address (slug)', txt('slug', v.slug, o.existing ? ' readonly' : ' placeholder="made from the date and the surname if left empty"'), o.existing ? 'Cannot change after publishing.' : 'Letters, digits, dots, hyphens. Example: 2026-10-21-ivanova.')}
 ${fld('photo', 'Photo', `<input id="photo" type="file" name="photo" accept=".jpg,.jpeg,.png,.webp">`, `${v.photo ? `Current: ${esc(v.photo)}. ` : ''}Portrait, at least 480×600 px, up to 8 MB; shown in black and white.`)}
@@ -94,10 +96,10 @@ ${fld('abstract_ru', 'Abstract (RU)', ta('abstract_ru', v.abstract_ru, 8))}
 ${fld('bio_en', 'About the speaker (EN)', ta('bio_en', v.bio_en, 5))}
 ${fld('bio_ru', 'About the speaker (RU)', ta('bio_ru', v.bio_ru, 5))}
 </div>
-<h3 class="form-h">Protected links <span class="note">— stored encrypted, never published</span></h3>
+<h3 class="form-h">Links <span class="note">— public, shown on the talk page</span></h3>
 <div class="form-grid2">
-${fld('zoom', `Zoom URL${o.hasZoom ? ' (one is stored)' : ''}`, txt('zoom', '', ' placeholder="https://…zoom.us/j/…" autocomplete="off"'), `${o.hasZoom ? 'Leave empty to keep the stored link; the' : 'The'} Join button shows while a link is stored.${o.hasZoom ? ' <label class="inline"><input type="checkbox" name="clear_zoom" value="1"> Remove the stored Zoom link</label>' : ''}`)}
-${fld('recording', `Recording URL${o.hasRecording ? ' (one is stored)' : ''}`, txt('recording', '', ' placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"'), `Schedule the YouTube stream beforehand (unlisted) and paste its URL here: it becomes the recording when the stream ends.${o.hasRecording ? ' <label class="inline"><input type="checkbox" name="clear_recording" value="1"> Remove the stored recording link</label>' : ''}`)}
+${fld('zoom', 'Zoom URL', txt('zoom', v.zoom, ' placeholder="https://…zoom.us/j/…?pwd=…" autocomplete="off"'), 'The invitation link with the passcode embedded. The Join button shows to everyone until the session ends; in Zoom keep "join before host" off, so nobody enters before you start. Empty the field to remove the button.')}
+${fld('video', 'Recording URL', txt('video', v.video, ' placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"'), 'YouTube or any other https:// address. Schedule the live stream beforehand and paste its URL: it becomes the recording when the stream ends. Empty the field to remove the button.')}
 </div>
 <h3 class="form-h">Documents <span class="note">— public, shown in the archive</span></h3>
 <div class="form-grid2">
@@ -108,14 +110,14 @@ ${fld('minutes_url', 'Minutes: or a link', txt('minutes_url', URL_RE.test(v.minu
 </div>
 ${v.slides || v.minutes ? `<p class="note"><label class="inline"><input type="checkbox" name="clear_slides" value="1"> Remove slides</label> &nbsp; <label class="inline"><input type="checkbox" name="clear_minutes" value="1"> Remove minutes</label></p>` : ''}
 <p class="actions"><button class="btn" type="submit">${o.existing ? 'Save changes' : 'Publish'}</button><a class="more" href="/admin/talks">Back to the programme</a></p>
-<p class="note">Publishing writes the talk to the content repository; the site rebuilds itself and shows the change within about an hour. Protected links take effect immediately.</p>
+<p class="note">Publishing writes the talk to the content repository; the site rebuilds itself and shows the change within about 15 minutes.</p>
 </form>
 ${o.existing ? `<form class="form" method="post" action="/admin/talks/delete" data-confirm="Delete this talk from the programme? Its photo and documents stay in the repository."><input type="hidden" name="slug" value="${esc(v.slug)}"><p class="actions"><button class="btn btn-quiet" type="submit">Delete talk</button></p></form>` : ''}
 </div></section>`;
 }
 
 function valuesFrom(t) {
-  const v = { slug: t.slug || '', number: t.number || '', date: t.date || '', time: t.time || '17:00', language: t.language || 'en', photo: t.photo || '', slides: t.slides || '', minutes: t.minutes || '' };
+  const v = { slug: t.slug || '', number: t.number || '', date: t.date || '', time: t.time || '17:00', language: t.language || 'en', photo: t.photo || '', slides: t.slides || '', minutes: t.minutes || '', zoom: t.zoom || '', video: t.video || '' };
   const sp = t.speaker || '', af = t.affiliation || '';
   v.speaker = typeof sp === 'object' ? (sp.en || '') : sp; v.speaker_ru = typeof sp === 'object' ? (sp.ru || '') : '';
   v.affiliation = typeof af === 'object' ? (af.en || '') : af; v.affiliation_ru = typeof af === 'object' ? (af.ru || '') : '';
@@ -127,7 +129,8 @@ function valuesFromForm(f) {
   return { slug: g('slug'), number: g('number'), date: g('date'), time: g('time'), language: g('language') === 'ru' ? 'ru' : 'en',
     speaker: clean(g('speaker'), 200), speaker_ru: clean(g('speaker_ru'), 200), affiliation: clean(g('affiliation'), 300), affiliation_ru: clean(g('affiliation_ru'), 300),
     title_en: clean(g('title_en'), 500), title_ru: clean(g('title_ru'), 500), abstract_en: g('abstract_en').slice(0, 20000), abstract_ru: g('abstract_ru').slice(0, 20000),
-    bio_en: g('bio_en').slice(0, 10000), bio_ru: g('bio_ru').slice(0, 10000), slides_url: clean(g('slides_url'), 2048), minutes_url: clean(g('minutes_url'), 2048) };
+    bio_en: g('bio_en').slice(0, 10000), bio_ru: g('bio_ru').slice(0, 10000), slides_url: clean(g('slides_url'), 2048), minutes_url: clean(g('minutes_url'), 2048),
+    zoom: clean(g('zoom'), 2048), video: clean(g('video'), 2048) };
 }
 
 /* ---------- routes ---------- */
@@ -135,26 +138,25 @@ function valuesFromForm(f) {
 export async function talksAdmin(req, env, sub, who) {
   const url = new URL(req.url);
   const isPost = req.method === 'POST';
-  const page = (title, main) => html(P.adminPage({ title, main, who }));
+  const closed = env.REGISTRATION === 'closed';
+  const page = (title, main) => html(P.adminPage({ title, main, who, closed }));
 
   if (sub === '/talks') {
     if (isPost) return new Response('Method not allowed', { status: 405 });
     const built = await programme(env);
     let files = [], note = '';
     try { files = await content.list(env, 'data/talks'); } catch (e) { note = contentError(e) || 'Could not read the content repository.'; }
-    const stored = new Map((await links.all(env)).map((l) => [l.slug, l]));
     const bySlug = new Map(built.map((t) => [t.slug, t]));
     const slugs = new Set([...files.map((f) => f.name.replace(/\.json$/, '')), ...built.map((t) => t.slug)]);
     const rows = [...slugs].map((slug) => ({ slug, t: bySlug.get(slug), inRepo: files.some((f) => f.name === `${slug}.json`) }))
       .sort((a, b) => ((b.t && b.t.date) || b.slug).localeCompare((a.t && a.t.date) || a.slug));
     const st = url.searchParams.get('s');
     const main = `<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body">
-${st === 'saved' ? '<p class="form-status">Saved. The public pages update within about an hour; protected links are live now.</p>' : st === 'deleted' ? '<p class="form-status">Deleted.</p>' : ''}
+${st === 'saved' ? '<p class="form-status">Saved. The public site updates within about 15 minutes.</p>' : st === 'deleted' ? '<p class="form-status">Deleted.</p>' : ''}
 ${note ? `<p class="form-status">${esc(note)}</p>` : ''}
 <p class="actions"><a class="btn" href="/admin/talks/new">New talk</a></p>
 ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
-      const l = stored.get(slug) || {};
-      return `<li class="row"><time class="row-date">${esc(t ? t.date : '—')}</time><span class="row-who"><span>${esc(t ? L(t.speaker, 'en') : '')}</span><span class="row-aff">${esc(t ? (t.status === 'past' ? 'archive' : t.status) : 'publishing…')}${!inRepo ? ' · not in the repository' : ''}</span></span><a class="row-title" href="/admin/talks/edit?slug=${esc(slug)}">${esc(t ? (L(t.title, 'en') || L(t.title, 'ru')) : slug)}</a><span class="row-lang">${esc(t ? t.language.toUpperCase() : '')}</span><span class="row-links">${l.has_zoom ? '<span>Zoom ✓</span>' : ''}${l.has_recording ? '<span>Rec ✓</span>' : ''}<a href="/admin/announce?slug=${esc(slug)}">Announce</a></span></li>`;
+      return `<li class="row"><time class="row-date">${esc(t ? t.date : '—')}</time><span class="row-who"><span>${esc(t ? L(t.speaker, 'en') : '')}</span><span class="row-aff">${esc(t ? (t.status === 'past' ? 'archive' : t.status) : 'publishing…')}${!inRepo ? ' · not in the repository' : ''}</span></span><a class="row-title" href="/admin/talks/edit?slug=${esc(slug)}">${esc(t ? (L(t.title, 'en') || L(t.title, 'ru')) : slug)}</a><span class="row-lang">${esc(t ? t.language.toUpperCase() : '')}</span><span class="row-links">${t && t.join ? '<span>Zoom ✓</span>' : ''}${t && t.recording ? '<span>Rec ✓</span>' : ''}${closed ? '' : `<a href="/admin/announce?slug=${esc(slug)}">Announce</a>`}</span></li>`;
     }).join('')}</ol>` : '<p class="note">No talks yet.</p>'}
 </div></section>`;
     return page('Programme', main);
@@ -173,8 +175,7 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
     try { file = await content.getText(env, talkPath(slug)); } catch (e) { return page('Edit talk', `<section class="sec"><div class="sec-label"></div><div class="sec-body"><p class="form-status">${esc(contentError(e) || 'Could not read the talk.')}</p></div></section>`); }
     if (!file) return new Response('Not found', { status: 404 });
     let t; try { t = JSON.parse(file.text); } catch (e) { return page('Edit talk', `<section class="sec"><div class="sec-label"></div><div class="sec-body"><p class="form-status">The file ${esc(talkPath(slug))} is not valid JSON; fix it in the repository.</p></div></section>`); }
-    const l = await links.get(env, slug);
-    return page('Edit talk', form(valuesFrom({ ...t, slug }), { existing: true, sha: file.sha, hasZoom: !!(l && l.zoom), hasRecording: !!(l && l.recording) }));
+    return page('Edit talk', form(valuesFrom({ ...t, slug }), { existing: true, sha: file.sha }));
   }
 
   if (sub === '/talks/save') {
@@ -192,15 +193,14 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
     if (v.number && !/^\d{1,5}$/.test(v.number)) errors.push('Seminar number must be a whole number.');
     for (const [k, label] of [['slides_url', 'Slides link'], ['minutes_url', 'Minutes link']]) {
       if (v[k] && !URL_RE.test(v[k])) errors.push(`${label}: must start with https://`);
-      if (v[k] && allowedLinkHost(env, v[k])) errors.push(`${label}: Zoom and recording links belong in the protected fields above, not in the public documents.`);
+      if (v[k] && allowedLinkHost(env, v[k])) errors.push(`${label}: Zoom and recording links belong in the Links fields above, not in the documents.`);
     }
-    const zoomIn = clean(f.get('zoom'), 2048), recIn = clean(f.get('recording'), 2048);
-    for (const [val, label] of [[zoomIn, 'Zoom URL'], [recIn, 'Recording URL']]) if (val && !allowedLinkHost(env, val)) errors.push(`${label}: must be https:// on one of ${env.LINK_HOSTS || 'zoom.us, youtube.com, youtu.be'}.`);
+    if (v.zoom && !zoomLink(env, v.zoom)) errors.push('Zoom URL: must be an https:// invitation link on zoom.us.');
+    if (v.video && !URL_RE.test(v.video)) errors.push('Recording URL: must start with https://');
     const photo = await fileOf(f, 'photo', /\.(jpe?g|png|webp)$/i, PHOTO_MAX, 'Photo', errors);
     const slidesFile = await fileOf(f, 'slides_file', /\.(pdf|pptx?)$/i, DOC_MAX, 'Slides', errors);
     const minutesFile = await fileOf(f, 'minutes_file', /\.(pdf|pptx?)$/i, DOC_MAX, 'Minutes', errors);
-    const cur = SLUG.test(v.slug) ? await links.get(env, v.slug) : null;
-    if (errors.length) return html(P.adminPage({ title: existing ? 'Edit talk' : 'New talk', main: form(v, { existing, sha: String(f.get('sha') || ''), errors, hasZoom: !!(cur && cur.zoom), hasRecording: !!(cur && cur.recording) }), who }), 422);
+    if (errors.length) return html(P.adminPage({ title: existing ? 'Edit talk' : 'New talk', main: form(v, { existing, sha: String(f.get('sha') || ''), errors }), who, closed }), 422);
 
     try {
       // Existing record (merge: what the form does not carry — timezone, summary, photo, documents — survives).
@@ -218,11 +218,6 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
       if (slidesFile) { t.slides = `${v.slug}-slides.${slidesFile.ext}`; await putFile(`files/${t.slides}`, slidesFile.bytes, 'slides'); } else if (v.slides_url) t.slides = v.slides_url;
       if (minutesFile) { t.minutes = `${v.slug}-minutes.${minutesFile.ext}`; await putFile(`files/${t.minutes}`, minutesFile.bytes, 'minutes'); } else if (v.minutes_url) t.minutes = v.minutes_url;
 
-      // Protected links: empty = keep; the checkbox clears; the public flags follow what is stored.
-      const zoom = f.get('clear_zoom') === '1' ? '' : (zoomIn || (cur && cur.zoom) || '');
-      const recording = f.get('clear_recording') === '1' ? '' : (recIn || (cur && cur.recording) || '');
-      if (zoom || recording) await links.put(env, v.slug, zoom, recording); else if (cur) await links.remove(env, v.slug);
-
       const built = await programme(env);
       const number = v.number ? Number(v.number) : (t.number || (built.reduce((m, x) => Math.max(m, Number(x.number) || 0), 0) + 1));
       const record = {
@@ -230,15 +225,16 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
         speaker: nameField(v.speaker, v.speaker_ru), affiliation: nameField(v.affiliation, v.affiliation_ru),
         photo: t.photo || '', date: v.date, time: v.time, language: v.language,
         title: bilingual(v.title_en, v.title_ru), abstract: bilingual(v.abstract_en, v.abstract_ru), bio: bilingual(v.bio_en, v.bio_ru),
-        join: !!zoom, recording: !!recording, slides: t.slides || '', minutes: t.minutes || ''
+        zoom: v.zoom, video: v.video, slides: t.slides || '', minutes: t.minutes || ''
       };
+      delete t.join; delete t.recording;   // flags of the former protected-link scheme: the build derives them now
       for (const k of Object.keys(t)) if (!(k in record)) record[k] = t[k];   // timezone, summary, duration and the like
       await content.put(env, talkPath(v.slug), JSON.stringify(record, null, 2) + '\n', `${existing ? 'Update' : 'Add'} seminar ${v.slug}`, file ? file.sha : undefined);
     } catch (e) {
       const msg = contentError(e);
       if (!msg) throw e;
       errors.push(msg);
-      return html(P.adminPage({ title: existing ? 'Edit talk' : 'New talk', main: form(v, { existing, sha: String(f.get('sha') || ''), errors, hasZoom: !!(cur && cur.zoom), hasRecording: !!(cur && cur.recording) }), who }), e.code === 'E_CONTENT_CONFLICT' ? 409 : 502);
+      return html(P.adminPage({ title: existing ? 'Edit talk' : 'New talk', main: form(v, { existing, sha: String(f.get('sha') || ''), errors }), who, closed }), e.code === 'E_CONTENT_CONFLICT' ? 409 : 502);
     }
     return redirect(`/admin/talks?s=saved&slug=${encodeURIComponent(v.slug)}`);
   }
@@ -255,7 +251,6 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
       const msg = contentError(e); if (!msg) throw e;
       return page('Programme', `<section class="sec"><div class="sec-label"></div><div class="sec-body"><p class="form-status">${esc(msg)}</p><p class="actions"><a class="more" href="/admin/talks">Back</a></p></div></section>`);
     }
-    await links.remove(env, slug);
     return redirect('/admin/talks?s=deleted');
   }
   return new Response('Not found', { status: 404 });

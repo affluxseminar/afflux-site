@@ -104,10 +104,12 @@ for (const t of talks) {
   const isDoc = (u) => !u || /^https:\/\/[^\s"'<>]+$/.test(u) || FILE_NAME.test(docName(u));
   if (!isDoc(t.slides)) errors.push(`${id}: slides must be an https:// address or a file name in files/`);
   if (!isDoc(t.minutes)) errors.push(`${id}: minutes must be an https:// address or a file name in files/`);
-  // Zoom and recording URLs never enter the public data: only booleans that switch the buttons on.
-  for (const k of ['join', 'recording', 'zoom']) {
-    if (typeof t[k] === 'string' && t[k]) errors.push(`${id}: "${k}" must not contain a link — protected URLs are entered in the server admin, not in talks.json`);
-  }
+  // The seminar is open (owner's decision, 13 Oct 2026): the link to join and the recording are public
+  // fields of the talk, shown on its page to everyone. The link to join must be a Zoom invitation
+  // (its passcode is embedded; the meeting itself does not start before the host); the recording may
+  // be any https address.
+  if (t.zoom && !/^https:\/\/([a-z0-9-]+\.)*zoom\.us\/[^\s"'<>]+$/i.test(t.zoom)) errors.push(`${id}: zoom must be an https:// invitation link on zoom.us`);
+  if (t.video && !/^https:\/\/[^\s"'<>]+$/.test(t.video)) errors.push(`${id}: video must be an https:// address`);
   if (t.photo && !/^[A-Za-z0-9._-]+\.(jpe?g|png|webp|avif)$/i.test(t.photo)) errors.push(`${id}: photo must be a file name in photos/ (jpg, png, webp, avif)`);
 }
 if (!/^https:\/\/[^/]+$/.test(site.baseUrl || '')) errors.push('site.json: baseUrl must be https://host with no path');
@@ -151,7 +153,7 @@ function jsonLd(page) {
       organizer: { '@type': 'Organization', name: 'AFFLUX', url: site.baseUrl },
       url: absUrl(urlFor(lang, R.talkPath(t)))
     };
-    if (t.recording) data.recordedIn = { '@type': 'VideoObject', name: R.L(t.title, lang), url: t.recording };
+    if (t.video) data.recordedIn = { '@type': 'VideoObject', name: R.L(t.title, lang), url: t.video };
     return data;
   }
   if (page.kind === 'home') {
@@ -299,7 +301,7 @@ ${[...byPath.values()].flatMap((pair) => ['en', 'ru'].map((lang) => `  <url>
   </url>`)).join('\n')}
 </urlset>
 `);
-writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /account\nDisallow: /api/\nSitemap: ${absUrl('/sitemap.xml')}\n`);
+writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${absUrl('/sitemap.xml')}\n`);
 
 // Security headers for hosts that read _headers (Netlify, Cloudflare Pages). GitHub Pages ignores this
 // file; there the <meta> CSP in every page applies (everything except frame-ancestors).
@@ -307,7 +309,7 @@ writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /admi
 writeFileSync(join(OUT, 'programme.json'), JSON.stringify({
   generated: NOW.toISOString(),
   talks: model.all.map((t) => ({ slug: t.slug, number: t.number, date: t.date, time: t.time, timezone: t.timezone, language: t.language,
-    title: t.title, speaker: t.speaker, affiliation: t.affiliation || '', abstract: t.abstract || {}, status: t.status, join: !!t.join, recording: !!t.recording, slides: !!t.slides, minutes: !!t.minutes }))
+    title: t.title, speaker: t.speaker, affiliation: t.affiliation || '', abstract: t.abstract || {}, status: t.status, join: !!t.zoom, recording: !!t.video, slides: !!t.slides, minutes: !!t.minutes }))
 }, null, 2));
 writeFileSync(join(OUT, '_headers'), `/*
   Content-Security-Policy: ${CSP_HEADER}

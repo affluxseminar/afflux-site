@@ -27,33 +27,33 @@ with sync_playwright() as p:
     ok(r.status in (200,303), f'admin links saved status={r.status}')
     r=ap.request.post(B+'/admin/links', form={'slug':'x','zoom':'https://evil.example/j/1'}, headers={'Origin':B}); ok(r.status==422, 'link outside the host allow-list rejected')
     ap.goto(B+'/admin/'); ok('Registered' in ap.content(), 'admin overview renders')
-    # ---- programme editor: public fields to the content repository, protected links to the encrypted store ----
+    # ---- programme editor: everything to the content repository; the Zoom invitation and the recording are public fields ----
     import base64
     JPG=base64.b64decode('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=')
     PDF=b'%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n'
     fields={'existing':'','sha':'','date':'2026-11-05','time':'17:00','speaker':'Anna Ivanova','speaker_ru':'Анна Иванова','affiliation':'HSE University','language':'en','number':'','slug':'',
-            'title_en':'Editor test talk','title_ru':'','abstract_en':'First paragraph.\r\n\r\nSecond.','abstract_ru':'','bio_en':'Bio.','bio_ru':'','zoom':'https://zoom.example.org/j/555','recording':'','slides_url':'','minutes_url':''}
+            'title_en':'Editor test talk','title_ru':'','abstract_en':'First paragraph.\r\n\r\nSecond.','abstract_ru':'','bio_en':'Bio.','bio_ru':'','zoom':'https://zoom.example.org/j/555','video':'','slides_url':'','minutes_url':''}
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields, 'photo':{'name':'p.jpg','mimeType':'image/jpeg','buffer':JPG}, 'slides_file':{'name':'s.pdf','mimeType':'application/pdf','buffer':PDF}}, headers={'Origin':B}, max_redirects=0)
     ok(r.status==303 and r.headers.get('location','').startswith('/admin/talks?s=saved'), f'talk published ({r.status})')
     repo={x['path']:x for x in get(M+'/_repo')}
     t=json.loads(repo.get('data/talks/2026-11-05-ivanova.json',{}).get('text') or '{}')
-    ok(t.get('slug')=='2026-11-05-ivanova' and t.get('speaker')=={'en':'Anna Ivanova','ru':'Анна Иванова'} and t.get('join') is True and t.get('recording') is False and t.get('photo')=='2026-11-05-ivanova.jpg' and t.get('slides')=='2026-11-05-ivanova-slides.pdf' and t.get('abstract',{}).get('en')=='First paragraph.\n\nSecond.', 'talk file written with derived slug, flags, photo and slides names')
+    ok(t.get('slug')=='2026-11-05-ivanova' and t.get('speaker')=={'en':'Anna Ivanova','ru':'Анна Иванова'} and t.get('zoom')=='https://zoom.example.org/j/555' and t.get('video')=='' and 'join' not in t and t.get('photo')=='2026-11-05-ivanova.jpg' and t.get('slides')=='2026-11-05-ivanova-slides.pdf' and t.get('abstract',{}).get('en')=='First paragraph.\n\nSecond.', 'talk file written with derived slug, flags, photo and slides names')
     ok('photos/2026-11-05-ivanova.jpg' in repo and 'files/2026-11-05-ivanova-slides.pdf' in repo, 'photo and slides uploaded to the repository')
-    ok(not any('zoom.example' in (x['text'] or '') for x in repo.values()), 'no Zoom address anywhere in the repository')
-    ok(d1('afflux_links',"SELECT COUNT(*) n FROM links WHERE slug='2026-11-05-ivanova'")[0]['n']==1, 'Zoom link stored in the links database')
-    e=ap.request.get(B+'/admin/talks/edit?slug=2026-11-05-ivanova'); ok(e.status==200 and 'one is stored' in e.text() and 'zoom.example' not in e.text() and 'value="Anna Ivanova"' in e.text(), 'edit form prefilled; stored link indicated, never shown')
+    ok(d1('afflux_links',"SELECT COUNT(*) n FROM links WHERE slug='2026-11-05-ivanova'")[0]['n']==0, 'nothing written to the links database (public fields only)')
+    e=ap.request.get(B+'/admin/talks/edit?slug=2026-11-05-ivanova'); ok(e.status==200 and 'value="https://zoom.example.org/j/555"' in e.text() and 'value="Anna Ivanova"' in e.text(), 'edit form prefilled with the public Zoom link')
     sha=re.search(r'name="sha" value="([^"]+)"', e.text()).group(1)
-    upd={**fields,'existing':'1','sha':sha,'slug':'2026-11-05-ivanova','title_ru':'Тест редактора','zoom':'','recording':'https://video.example.org/rec/9'}
+    upd={**fields,'existing':'1','sha':sha,'slug':'2026-11-05-ivanova','title_ru':'Тест редактора','zoom':'','video':'https://video.example.org/rec/9'}
     r=ap.request.post(B+'/admin/talks/save', multipart=upd, headers={'Origin':B}, max_redirects=0); ok(r.status==303, f'talk updated ({r.status})')
     t=json.loads({x['path']:x for x in get(M+'/_repo')}['data/talks/2026-11-05-ivanova.json']['text'])
-    ok(t['title']=={'en':'Editor test talk','ru':'Тест редактора'} and t['join'] is True and t['recording'] is True and t['photo']=='2026-11-05-ivanova.jpg', 'update keeps the stored Zoom link (empty field), adds the recording, keeps the photo')
+    ok(t['title']=={'en':'Editor test talk','ru':'Тест редактора'} and t['zoom']=='' and t['video']=='https://video.example.org/rec/9' and t['photo']=='2026-11-05-ivanova.jpg', 'update: empty field removes the Zoom link, adds the recording, keeps the photo')
+    r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'slug':'x-bad-zoom','zoom':'https://evil.example/j/1'}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'zoom.us' in r.text(), 'Zoom link on a foreign host refused')
     r=ap.request.post(B+'/admin/talks/save', multipart={**upd,'sha':'stale'}, headers={'Origin':B}, max_redirects=0); ok(r.status==409, 'stale edit refused (file changed meanwhile)')
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'title_en':'','slug':'x-no-title'}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'title' in r.text().lower(), 'missing title refused')
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'slug':'x-bad-photo','photo':{'name':'p.jpg','mimeType':'image/jpeg','buffer':b'not a jpeg at all'}}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'does not look like' in r.text(), 'file that is not an image refused despite its name')
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'slug':'x-zoom-doc','slides_url':'https://zoom.example.org/j/1'}, headers={'Origin':B}, max_redirects=0); ok(r.status==422, 'Zoom address in a public document field refused')
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'slug':'2026-11-05-ivanova'}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'already exists' in r.text(), 'publishing over an existing address refused')
     r=ap.request.post(B+'/admin/talks/delete', form={'slug':'2026-11-05-ivanova'}, headers={'Origin':B}, max_redirects=0)
-    ok(r.status==303 and 'data/talks/2026-11-05-ivanova.json' not in {x['path'] for x in get(M+'/_repo')} and d1('afflux_links',"SELECT COUNT(*) n FROM links WHERE slug='2026-11-05-ivanova'")[0]['n']==0, 'delete removes the talk file and its links; documents stay')
+    ok(r.status==303 and 'data/talks/2026-11-05-ivanova.json' not in {x['path'] for x in get(M+'/_repo')}, 'delete removes the talk file; documents stay')
     anon2=b.new_context(); r=anon2.request.get(B+'/admin/talks', headers={'Host':'example.org'}); ok(r.status==403, 'programme editor closed without Access on a non-loopback host'); anon2.close()
     # ---- anonymous visitor ----
     ctx=b.new_context(); stub(ctx); pg=ctx.new_page()
