@@ -204,7 +204,8 @@
     const s = site.strings[lang];
     const big = opts && opts.big;
     const iso = t.start.toISOString();
-    const date = fmtLongDate(t.start, lang, t.timezone);
+    const raw = fmtLongDate(t.start, lang, t.timezone);
+    const date = raw.charAt(0).toUpperCase() + raw.slice(1);   // the date opens a line of its own: capital weekday in Russian too
     const time = fmtTime(t.start, t.timezone);
     const tzNote = t.timezone === 'Europe/Moscow' ? s.moscowTime : `(${t.timezone})`;
     return `<p class="when${big ? ' when-big' : ''}">
@@ -443,10 +444,10 @@ ${sections || `<section class="sec">
 </section>
 <section class="sec">
   <div class="sec-label"></div>
-  <div class="sec-body prose">
-    <p>${esc(s.subscribeHow)}</p>
+  <div class="sec-body">
+    <div class="prose"><p>${esc(s.subscribeHow)}</p></div>
     <p class="actions"><a class="btn" href="${esc(mail)}">${esc(s.subscribeButton)}</a><a class="more" href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
-    <p class="note">${esc(s.subscribeNote)}</p>
+    <p class="note note-wide">${esc(s.subscribeNote)}</p>
   </div>
 </section>`;
   }

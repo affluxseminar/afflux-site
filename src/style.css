@@ -119,7 +119,15 @@ img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
 a:hover { color: var(--accent); }
 ::selection { background: var(--accent); color: var(--on-accent); }
+/* Touch: no grey tap flash and no box drawn around a link after a tap (Android Chrome); the keyboard
+   focus ring stays for people who navigate with Tab. */
+html { -webkit-tap-highlight-color: transparent; }
+a, button, label, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+:focus { outline: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 1px; }
+@media (hover: none) and (pointer: coarse) {
+  a:focus-visible, .btn:focus-visible, .site-nav a:focus-visible, .lang a:focus-visible { outline: none; }
+}
 h1, h2, h3, p, ol, ul, figure, fieldset { margin: 0; }
 fieldset { border: 0; padding: 0; min-width: 0; }
 ol, ul { padding: 0; list-style: none; }
@@ -313,6 +321,7 @@ main .sec:last-child { padding-bottom: calc(var(--space) * 1.2); }
   .actions .more { padding-block: 0.4rem; }
 }
 .note { font-size: var(--fs-0); color: var(--text-2); line-height: 1.5; }
+.note-wide { margin-top: 1.5rem; max-width: 60ch; font-size: var(--fs-1); text-wrap: pretty; }
 
 /* the one figure (figure.field; the form's div.field is unrelated) */
 figure.field { color: var(--field); position: relative; }
@@ -346,6 +355,7 @@ figure.field { color: var(--field); position: relative; }
 /* ---------- ledgers ---------- */
 
 .ledger { border-top: 1px solid var(--rule); }
+.sec-body > .ledger:last-child .row:last-child { border-bottom: 0; }   /* the section's own rule follows */
 .row {
   display: grid;
   grid-template-columns: 9.5rem minmax(0, 15rem) minmax(0, 1fr) 2.5rem auto;
@@ -385,6 +395,7 @@ figure.field { color: var(--field); position: relative; }
   }
   .row-title { font-size: var(--fs-2); }
   .row-links { justify-content: flex-start; margin-top: 0.1rem; gap: 0.5rem; margin-inline: -0.4rem; }
+  .ledger-upcoming .row-links { margin-inline: 0; }
   .row-links a { padding: 0.45rem 0.4rem; }
   .row-links:empty { display: none; }
   .row-time { padding-block: 0.2rem; }
