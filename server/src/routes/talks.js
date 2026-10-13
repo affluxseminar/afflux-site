@@ -51,7 +51,8 @@ async function fileOf(form, name, extRe, max, label, errors) {
 
 async function programme(env) {
   try {
-    const r = await fetch(`${env.SITE_BASE}/programme.json`, { cf: { cacheTtl: 30 } });
+    const u = `${env.SITE_BASE}/programme.json`;
+    const r = env.ASSETS ? await env.ASSETS.fetch(new Request(u)) : await fetch(u, { cf: { cacheTtl: 30 } });
     if (!r.ok) return [];
     return (await r.json()).talks || [];
   } catch (e) { return []; }

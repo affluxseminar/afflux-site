@@ -1,23 +1,27 @@
-# Builds the static site from the public CONTENT repository and deploys it together with the
-# application server from THIS repository (code, owner only). The content repository holds no
-# credential and cannot reach this one: this workflow polls it (hourly) and deploys when
-# the live site's content-version differs from the repository's latest commit, or on a push here,
-# or on demand. The live site itself is the record of what is deployed — not a cache.
+# Builds the static site from the public CONTENT repository, publishes it to GitHub Pages (the public
+# site, affluxseminar.org — GitHub Pages is reachable from Russia, where Cloudflare-proxied sites are
+# throttled) and deploys the application server from THIS repository (the admin,
+# admin.affluxseminar.org, a Cloudflare Worker). The content repository holds no credential and
+# cannot reach this one: this workflow polls it every 10 minutes and deploys when the live site's
+# content-version differs from the repository's latest commit, or on a push here, or on demand.
+# The live site itself is the record of what is deployed — not a cache.
 #
-# Repository secrets: CLOUDFLARE_API_TOKEN ("Edit Cloudflare Workers" template, this account and zone only, no D1), CLOUDFLARE_ACCOUNT_ID.
+# Repository secrets: CLOUDFLARE_API_TOKEN (Workers Scripts, Workers Routes, DNS, this account and zone), CLOUDFLARE_ACCOUNT_ID.
 # Repository variables: CONTENT_REPO (affluxseminar/afflux-content), SITE_URL (https://affluxseminar.org).
+# GitHub Pages: Settings → Pages → Source "GitHub Actions", custom domain affluxseminar.org, HTTPS enforced.
 # The "production" environment is configured with a deployment-branch rule for main; the YAML only
-# names it. A passkey on the owner's account is what makes "owner only" true (a free personal
-# account cannot enforce branch rulesets on a private repository; add one if that changes).
+# names it. A passkey on the owner's account is what makes "owner only" true.
 name: Build, test and deploy
 on:
   push:
     branches: [main]
   schedule:
-    - cron: "17 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 permissions:
   contents: read
+  pages: write
+  id-token: write
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -78,6 +82,34 @@ jobs:
         run: python test/rotation.py --disposable 600
         working-directory: server
 
+  # The public site: GitHub Pages. The same build the admin was tested with.
+  pages:
+    needs: [content, test]
+    if: needs.content.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTENT_REPO }}
+          ref: ${{ needs.content.outputs.sha }}
+          path: content
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node build.mjs --content content --content-sha ${{ needs.content.outputs.sha }}
+      - run: echo "affluxseminar.org" > dist/CNAME
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # The admin: the Worker on admin.affluxseminar.org.
   deploy:
     needs: [content, test]
     if: needs.content.outputs.changed == 'true'

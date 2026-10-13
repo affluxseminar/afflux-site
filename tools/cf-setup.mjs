@@ -4,7 +4,7 @@
    touches secrets: the six Worker secrets are entered in the dashboard by the owner.
 
    Usage: CF_SETUP_TOKEN=… node tools/cf-setup.mjs --mailbox you@example.org [--steps a,b,c] [--site DIR]
-   Steps: account d1 subdomain zone ech dns email redirects ratelimit access summary   (default: all)
+   Steps: account d1 subdomain zone ech dns email redirects ratelimit access pages summary   (default: all)
    Writes: cf-setup.out.json (ids for wrangler.toml) and patches server/wrangler.toml in place
    so that `wrangler d1 migrations apply` and `wrangler deploy` can run right after. */
 
@@ -20,6 +20,7 @@ const SITE = opt('--site', '.');
 const ORG = 'affluxseminar.org', COM = 'affluxseminar.com';
 const SEMINAR = `seminar@${ORG}`;
 const TEAM = 'affluxseminar';                       // → affluxseminar.cloudflareaccess.com
+const ADMIN = `admin.${ORG}`;                        // the Worker (programme editor) lives here; the public site is on GitHub Pages
 const want = (s) => STEPS.includes('all') || STEPS.includes(s);
 const out = existsSync('cf-setup.out.json') ? JSON.parse(readFileSync('cf-setup.out.json', 'utf8')) : {};
 const save = () => writeFileSync('cf-setup.out.json', JSON.stringify(out, null, 2) + '\n');
@@ -143,7 +144,7 @@ async function dns() {
   if (out.zone_org) {
     await dnsUpsert(out.zone_org, 'TXT', ORG, 'v=spf1 include:_spf.mx.cloudflare.net include:spf.smtp2go.com ~all');
     await dnsUpsert(out.zone_org, 'TXT', `_dmarc.${ORG}`, `v=DMARC1; p=none; rua=mailto:${SEMINAR}; adkim=r; aspf=r`);
-    await dnsUpsert(out.zone_org, 'CNAME', `www.${ORG}`, ORG, { proxied: true });
+    await dnsUpsert(out.zone_org, 'CNAME', `www.${ORG}`, `${TEAM}.github.io`, { proxied: false });   // GitHub Pages redirects www to the apex
   }
   if (out.zone_com) {
     await dnsUpsert(out.zone_com, 'TXT', COM, 'v=spf1 -all');
@@ -218,7 +219,7 @@ async function access() {
   else log('access idp: one-time PIN exists');
   const apps = await cf('GET', `/accounts/${acc}/access/apps?per_page=100`);
   let app = apps.find((a) => a.name === 'AFFLUX admin');
-  const body = { name: 'AFFLUX admin', type: 'self_hosted', domain: `${ORG}/admin`, self_hosted_domains: [`${ORG}/admin`, `${ORG}/ru/admin`],
+  const body = { name: 'AFFLUX admin', type: 'self_hosted', domain: `${ADMIN}/admin`, self_hosted_domains: [`${ADMIN}/admin`, `${ADMIN}/ru/admin`],
     session_duration: '24h', allowed_idps: [otp.id], auto_redirect_to_identity: true, app_launcher_visible: false, http_only_cookie_attribute: true, same_site_cookie_attribute: 'lax', enable_binding_cookie: true, skip_interstitial: true };
   if (!app) { app = await cf('POST', `/accounts/${acc}/access/apps`, body); log(`access app: created (aud ${app.aud})`); }
   else { app = await cf('PUT', `/accounts/${acc}/access/apps/${app.id}`, body); log(`access app: exists, settings refreshed (aud ${app.aud})`); }
@@ -236,6 +237,28 @@ async function access() {
   log('wrangler.toml patched with ACCESS_TEAM_DOMAIN and ACCESS_AUD (commit these)');
 }
 
+/* ---------- GitHub Pages: the public site leaves Cloudflare's proxy ----------
+   The apex and www point straight at GitHub Pages (DNS only, grey cloud): Russian providers throttle
+   Cloudflare-proxied sites, GitHub Pages they do not. The Worker keeps admin.<domain> as its custom
+   domain (wrangler.toml); its former apex custom domain is removed here so that the apex records can
+   be replaced. The .com stays proxied: a 301 is small enough to pass. */
+const PAGES_A = ['185.199.108.153', '185.199.109.153', '185.199.110.153', '185.199.111.153'];
+const PAGES_AAAA = ['2606:50c0:8000::153', '2606:50c0:8001::153', '2606:50c0:8002::153', '2606:50c0:8003::153'];
+async function pages() {
+  if (!out.zone_org) return;
+  const domains = await cf('GET', `/accounts/${out.account_id}/workers/domains?zone_id=${out.zone_org}`);
+  for (const d of domains.filter((x) => x.hostname === ORG)) { await cf('DELETE', `/accounts/${out.account_id}/workers/domains/${d.id}`); log(`worker custom domain ${ORG}: removed (the Worker is on ${ADMIN})`); }
+  /* whatever sits on the apex now (the Worker's placeholder, old A records) goes; then the GitHub Pages set */
+  const apex = await cf('GET', `/zones/${out.zone_org}/dns_records?name=${ORG}&per_page=100`);
+  for (const r of apex.filter((x) => ['A', 'AAAA', 'CNAME'].includes(x.type) && !PAGES_A.includes(x.content) && !PAGES_AAAA.includes(x.content))) { await cf('DELETE', `/zones/${out.zone_org}/dns_records/${r.id}`); log(`dns ${ORG} ${r.type} ${r.content}: removed`); }
+  for (const ip of PAGES_A) await dnsUpsert(out.zone_org, 'A', ORG, ip, { proxied: false });
+  for (const ip of PAGES_AAAA) await dnsUpsert(out.zone_org, 'AAAA', ORG, ip, { proxied: false });
+  const www = await cf('GET', `/zones/${out.zone_org}/dns_records?name=www.${ORG}&per_page=100`);
+  for (const r of www.filter((x) => !(x.type === 'CNAME' && x.content === `${TEAM}.github.io`))) { await cf('DELETE', `/zones/${out.zone_org}/dns_records/${r.id}`); log(`dns www.${ORG} ${r.type} ${r.content}: removed`); }
+  await dnsUpsert(out.zone_org, 'CNAME', `www.${ORG}`, `${TEAM}.github.io`, { proxied: false });   // GitHub redirects www to the apex itself
+  log(`GitHub Pages: in the repository Settings → Pages set the custom domain ${ORG} and tick "Enforce HTTPS" once the certificate is issued`);
+}
+
 /* ---------- summary ---------- */
 function summary() {
   log('\n================ SUMMARY (commit the wrangler.toml values; nothing here is secret) ================');
@@ -247,10 +270,10 @@ function summary() {
   log('=====================================================================================================');
 }
 
-const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access };
+const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access, pages };
 (async () => {
   if (!out.account_id || want('account')) await account();
-  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access']) {
+  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access', 'pages']) {
     if (!want(step)) continue;
     log(`\n--- ${step} ---`);
     try { await run[step](); } catch (e) { warn(`${step} failed: ${e.message}`); process.exitCode = 1; }

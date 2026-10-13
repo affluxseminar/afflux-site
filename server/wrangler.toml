@@ -12,23 +12,27 @@ compatibility_date = "2025-09-01"
 workers_dev = false
 
 
-# One deployment serves both: the static site (built into ../dist, no secrets, no bindings)
-# and the dynamic paths below, which run in the Worker. Every other path is a static file.
+# The Worker is the admin (programme editor) on its own host. The public site is the same static
+# build served from GitHub Pages at PUBLIC_SITE (reachable from Russia, where Cloudflare-proxied
+# sites are throttled); the admin host serves the editor, the health check and the assets the
+# editor's pages use, and sends every other path to the public site (src/index.js).
 routes = [
-  { pattern = "affluxseminar.org", custom_domain = true }
+  { pattern = "admin.affluxseminar.org", custom_domain = true }
 ]
 
 [assets]
 directory = "../dist"
+binding = "ASSETS"
 not_found_handling = "404-page"
-run_worker_first = ["/register*", "/signin*", "/account*", "/go/*", "/api/*", "/admin*", "/ru/register*", "/ru/signin*", "/ru/account*", "/ru/go/*", "/ru/api/*", "/__scheduled"]
+run_worker_first = true
 
 [triggers]
 crons = ["17 4 * * *"]
 
 [vars]
 REGISTRATION = "closed"                             # the public site collects nothing: registration, sign-in and accounts are shut
-SITE_BASE = "https://affluxseminar.org"
+SITE_BASE = "https://admin.affluxseminar.org"       # this Worker's own origin (same-origin checks, programme.json)
+PUBLIC_SITE = "https://affluxseminar.org"           # where the public site lives; other paths on this host go there
 SMTP2GO_BASE_URL = "https://api.smtp2go.com"
 MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"    # the one address: sign-in links, announcements, replies
 # FEEDBACK_TO = "…"                                # where participants' comments go; defaults to the MAIL_FROM address

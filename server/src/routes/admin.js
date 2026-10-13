@@ -14,7 +14,8 @@ const CHUNK = 20;
 
 async function programme(env) {
   try {
-    const r = await fetch(`${env.SITE_BASE}/programme.json`, { cf: { cacheTtl: 60 } });
+    const u = `${env.SITE_BASE}/programme.json`;
+    const r = env.ASSETS ? await env.ASSETS.fetch(new Request(u)) : await fetch(u, { cf: { cacheTtl: 60 } });
     if (!r.ok) return [];
     return (await r.json()).talks || [];
   } catch (e) { return []; }
@@ -181,7 +182,7 @@ ${orphans.length ? `<section class="sec"><h2 class="sec-label">Stored without a 
         const L = (v) => (v && typeof v === 'object') ? (v[lang] || v.en || v.ru || '') : (v || '');
         const start = new Date(`${talk.date}T${talk.time}:00`);
         const date = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: talk.timezone }).format(start).replace(/ г\.$/, '');
-        const pageUrl = `${env.SITE_BASE}${lang === 'ru' ? '/ru' : ''}/talks/${talk.slug}/`;
+        const pageUrl = `${env.PUBLIC_SITE || env.SITE_BASE}${lang === 'ru' ? '/ru' : ''}/talks/${talk.slug}/`;
         const whoT = L(talk.speaker) + (talk.affiliation ? ` (${L(talk.affiliation)})` : '');
         const abs = String(L(talk.abstract)).split(/\n\s*\n/)[0];
         pre = lang === 'ru'

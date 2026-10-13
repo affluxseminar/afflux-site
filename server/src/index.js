@@ -17,18 +17,35 @@ function route(req) {
 
 /* The public site keeps no data about visitors: with REGISTRATION = "closed" every participant-facing
    dynamic path (registration, sign-in, account, protected links, their APIs) is shut. GET requests are
-   sent to the Subscribe page; anything else gets 404. The admin and the health check are unaffected. */
+   sent to the public site's Subscribe page; anything else gets 404. The admin and the health check are
+   unaffected. */
 const PARTICIPANT_PATHS = /^\/(register|signin|account|go|api)(\/|$)/;
 function closedRegistration(env, p, lang, m) {
   if (env.REGISTRATION !== 'closed' || p === '/api/health' || !PARTICIPANT_PATHS.test(p)) return null;
-  if (m === 'GET' || m === 'HEAD') return new Response(null, { status: 302, headers: { Location: `${lang === 'ru' ? '/ru' : ''}/subscribe/` } });
+  if (m === 'GET' || m === 'HEAD') return new Response(null, { status: 302, headers: { Location: `${env.PUBLIC_SITE || ''}${lang === 'ru' ? '/ru' : ''}/subscribe/` } });
   return new Response('Not found', { status: 404 });
 }
+
+/* The Worker lives on its own host (admin.affluxseminar.org) while the public site is served
+   elsewhere (PUBLIC_SITE). On the admin host only the admin, the health check and the static assets
+   the admin pages use are served; any other path is sent to the public site. Without PUBLIC_SITE
+   (the dev environment) the Worker serves the whole static site itself, as before. */
+const ADMIN_HOST_ASSETS = /^\/(assets\/|photos\/|files\/|programme\.json$|favicon\.svg$|content-version\.txt$)/;
+function adminHostOnly(req, env, p, m) {
+  if (!env.PUBLIC_SITE || p === '/admin' || p.startsWith('/admin/') || p === '/api/health' || ADMIN_HOST_ASSETS.test(p)) return null;
+  const url = new URL(req.url);
+  if (m === 'GET' || m === 'HEAD') return new Response(null, { status: 302, headers: { Location: `${env.PUBLIC_SITE}${url.pathname}${url.search}` } });
+  return new Response('Not found', { status: 404 });
+}
+
+const STATIC = new WeakSet();   // responses from the assets binding: their headers come from _headers, not from withHeaders
 
 async function handle(req, env) {
   const { p, lang, m } = route(req);
   const closed = closedRegistration(env, p, lang, m);
   if (closed) return closed;
+  const away = adminHostOnly(req, env, p, m);
+  if (away) return away;
 
   if (m === 'GET' || m === 'HEAD') {
     if (p === '/api/health') return new Response('ok');
@@ -41,6 +58,8 @@ async function handle(req, env) {
     const go = p.match(/^\/go\/(join|recording)\/([^/]+)\/?$/);
     if (go) return getGo(req, env, lang, go[1], go[2]);
     if (p === '/admin' || p.startsWith('/admin/')) return admin(req, env, p.replace(/^\/admin/, '').replace(/\/$/, ''));
+    // Everything else is a static file (every request passes through the Worker: run_worker_first = true).
+    if (env.ASSETS) { const r = await env.ASSETS.fetch(req); STATIC.add(r); return r; }
     return new Response('Not found', { status: 404 });
   }
 
@@ -66,7 +85,9 @@ async function handle(req, env) {
 export default {
   async fetch(req, env) {
     try {
-      return withHeaders(await handle(req, env));
+      const res = await handle(req, env);
+      if (STATIC.has(res)) return res;
+      return withHeaders(res, env.PUBLIC_SITE ? { 'X-Robots-Tag': 'noindex' } : undefined);   // the admin host is not for search engines
     } catch (e) {
       if (e && e.status === 413) return withHeaders(new Response('Payload too large', { status: 413 }));
       if (e && e.code === 'E_KEY_GENERATION') return withHeaders(new Response('Temporarily unavailable, please try again in a moment', { status: 503, headers: { 'Retry-After': '5' } }));
