@@ -17,6 +17,9 @@ on:
     branches: [main]
   schedule:
     - cron: "*/10 * * * *"
+    # Nightly rebuild at about 03:00 Moscow time (00:07 UTC), even when nothing changed: a seminar
+    # that has taken place moves from Upcoming to the Archive without anyone saving anything.
+    - cron: "7 0 * * *"
   workflow_dispatch:
 permissions:
   contents: read
@@ -44,6 +47,7 @@ jobs:
           # while the site is not up yet (or unreachable) the schedule does nothing — the first deploy
           # comes from a push or "Run workflow". Pushes and manual runs always build.
           if [ "${{ github.event_name }}" != "schedule" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "7 0 * * *" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"
           elif [ -n "$live" ] && [ "$live" != "${{ steps.sha.outputs.sha }}" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"
           else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
 
