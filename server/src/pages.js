@@ -35,7 +35,9 @@ export function shell({ lang, kind, path, title, description, main }) {
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#070E1A">
 <script>${THEME_INIT}</script>
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/assets/fonts/OldStandardTT-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/GolosText-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/style.css">

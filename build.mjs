@@ -202,7 +202,9 @@ ${preview ? '' : `<link rel="canonical" href="${canonical}">
 <link rel="alternate" hreflang="en" href="${absUrl(urlFor('en', path))}">
 <link rel="alternate" hreflang="ru" href="${absUrl(urlFor('ru', path))}">
 <link rel="alternate" hreflang="x-default" href="${absUrl(urlFor('en', path))}">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <link rel="preload" href="/assets/fonts/OldStandardTT-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/GolosText-Variable.woff2" as="font" type="font/woff2" crossorigin>`}
@@ -301,8 +303,9 @@ for (const t of talks) {
 }
 // What content this build was made from, served publicly so the deploy workflow can compare the live site with the repository.
 writeFileSync(join(OUT, 'content-version.txt'), (CONTENT_SHA || 'local') + '\n');
-writeFileSync(join(OUT, 'favicon.svg'),
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#050B15"/><circle cx="32" cy="32" r="4" fill="#41E2C3"/><path d="M4 14c14 4 20 12 28 18M4 32h24M4 50c14-4 20-12 28-18M60 8c-10 8-18 16-26 22M60 56c-10-8-18-16-26-22" fill="none" stroke="#D5DDDA" stroke-width="1.4" stroke-linecap="round"/></svg>`);
+// The site's icons: the Old Standard A on the deep ground. favicon.svg scales; favicon.ico carries 16, 32 and 48 px
+// versions drawn a little heavier so the hairlines survive; apple-touch-icon.png is the 180 px home-screen tile.
+for (const f of readdirSync(join(HERE, 'assets/icons'))) cpSync(join(HERE, 'assets/icons', f), join(OUT, f));
 
 // sitemap with hreflang pairs
 const byPath = new Map();

@@ -31,7 +31,7 @@ function closedRegistration(env, p, lang, m) {
    elsewhere (PUBLIC_SITE). On the admin host only the admin, the health check and the static assets
    the admin pages use are served; any other path is sent to the public site. Without PUBLIC_SITE
    (the dev environment) the Worker serves the whole static site itself, as before. */
-const ADMIN_HOST_ASSETS = /^\/(assets\/|photos\/|files\/|programme\.json$|favicon\.svg$|content-version\.txt$)/;
+const ADMIN_HOST_ASSETS = /^\/(assets\/|photos\/|files\/|programme\.json$|favicon\.(svg|ico)$|apple-touch-icon\.png$|content-version\.txt$)/;
 function adminHostOnly(req, env, p, m) {
   if (!env.PUBLIC_SITE || p === '/admin' || p.startsWith('/admin/') || p === '/api/health' || ADMIN_HOST_ASSETS.test(p)) return null;
   const url = new URL(req.url);
