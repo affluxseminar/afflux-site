@@ -15,6 +15,27 @@
   src: url('/assets/fonts/OldStandardTT-Italic.woff2') format('woff2');
   font-weight: 400; font-style: italic; font-display: swap;
 }
+/* Old Standard draws the upright Ф and ф in their nineteenth-century form, with the bowls as brackets.
+   These two letters come from Noto Serif Display instead: the familiar shape, the same contrast.
+   Declared after the main face, so for these two code points they are the ones the browser checks first.
+   Noto's x-height is 0.536 em against Old Standard's 0.456, so the lowercase ф is scaled to 85 %: its bowl
+   then sits on the x-height of the neighbouring letters and its strokes match theirs (88/72/88 thousandths
+   of an em in Old Standard, 85/73/85 in the scaled Noto). The capital needs no scaling: both cap heights
+   are 0.71 em and the stems already agree. Browsers without size-adjust show the ф at full size, still
+   in the familiar shape. */
+@font-face {
+  font-family: 'Old Standard TT';
+  src: url('/assets/fonts/NotoSerifDisplay-Ef.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0444;
+  size-adjust: 85%;
+}
+@font-face {
+  font-family: 'Old Standard TT';
+  src: url('/assets/fonts/NotoSerifDisplay-Ef.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0424;
+}
 @font-face {
   font-family: 'Golos Text';
   src: url('/assets/fonts/GolosText-Variable.woff2') format('woff2');
