@@ -15,6 +15,15 @@
   src: url('/assets/fonts/OldStandardTT-Italic.woff2') format('woff2');
   font-weight: 400; font-style: italic; font-display: swap;
 }
+/* Old Standard draws the upright Ф and ф in their nineteenth-century form, with the bowls as brackets.
+   These two letters come from Noto Serif Display instead: the familiar shape, the same contrast.
+   Declared after the main face, so for these two code points it is the one the browser checks first. */
+@font-face {
+  font-family: 'Old Standard TT';
+  src: url('/assets/fonts/NotoSerifDisplay-Ef.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0424, U+0444;
+}
 @font-face {
   font-family: 'Golos Text';
   src: url('/assets/fonts/GolosText-Variable.woff2') format('woff2');
