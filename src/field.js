@@ -1,4 +1,4 @@
-/* The AFFLUX field: streamlines of a point sink with circulation and a weak uniform flow.
+/* The EEES field: streamlines of a point sink with circulation and a weak uniform flow.
    Shared by the static build (Fig. 1 as SVG), the application server (same figure on the
    account pages) and, through the parameters it exports, the live version in field-live.js. */
 

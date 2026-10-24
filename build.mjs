@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* AFFLUX static build.
+/* EEE Seminar static build.
    Reads data/site.json and data/talks.json, renders every page in EN (/) and RU (/ru/),
    copies assets, writes sitemap, robots, security headers and the not-found pages.
    No dependencies: Node 18+ only.
@@ -167,14 +167,14 @@ function jsonLd(page) {
       inLanguage: t.language,
       description: R.synopsis(R.L(t.abstract, lang), 400),
       performer: { '@type': 'Person', name: R.L(t.speaker, lang), affiliation: R.L(t.affiliation, lang) || undefined },
-      organizer: { '@type': 'Organization', name: 'AFFLUX', url: site.baseUrl },
+      organizer: { '@type': 'Organization', name: site.name, url: site.baseUrl },
       url: absUrl(urlFor(lang, R.talkPath(t)))
     };
     if (t.video) data.recordedIn = { '@type': 'VideoObject', name: R.L(t.title, lang), url: t.video };
     return data;
   }
   if (page.kind === 'home') {
-    return { '@context': 'https://schema.org', '@type': 'Organization', name: 'AFFLUX', alternateName: site.strings[lang].subtitle, url: site.baseUrl, email: site.email };
+    return { '@context': 'https://schema.org', '@type': 'Organization', name: site.name, alternateName: site.strings[lang].subtitle, url: site.baseUrl, email: site.email };
   }
   return null;
 }
@@ -208,7 +208,7 @@ ${preview ? '' : `<link rel="canonical" href="${canonical}">
 <link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <link rel="preload" href="/assets/fonts/OldStandardTT-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/GolosText-Variable.woff2" as="font" type="font/woff2" crossorigin>`}
-<meta property="og:site_name" content="AFFLUX">
+<meta property="og:site_name" content="${R.esc(site.name)}">
 <meta property="og:type" content="${page.kind === 'talk' ? 'article' : 'website'}">
 <meta property="og:title" content="${R.esc(page.title)}">
 <meta property="og:description" content="${R.esc(page.description)}">
@@ -303,7 +303,7 @@ for (const t of talks) {
 }
 // What content this build was made from, served publicly so the deploy workflow can compare the live site with the repository.
 writeFileSync(join(OUT, 'content-version.txt'), (CONTENT_SHA || 'local') + '\n');
-// The site's icons: the Old Standard A on the deep ground. favicon.svg scales; favicon.ico carries 16, 32 and 48 px
+// The site's icons: the Old Standard E on the deep ground. favicon.svg scales; favicon.ico carries 16, 32 and 48 px
 // versions drawn a little heavier so the hairlines survive; apple-touch-icon.png is the 180 px home-screen tile.
 for (const f of readdirSync(join(HERE, 'assets/icons'))) cpSync(join(HERE, 'assets/icons', f), join(OUT, f));
 
@@ -404,4 +404,4 @@ ${fieldLiveJs.replace(/<\//g, '<\\/')}
 /* ---------- report ---------- */
 
 const count = (d) => readdirSync(d, { withFileTypes: true }).reduce((n, e) => n + (e.isDirectory() ? count(join(d, e.name)) : 1), 0);
-console.log(`AFFLUX: ${written.length} pages (${model.upcoming.length} upcoming, ${model.past.length} in the archive) → ${OUT.replace(HERE + '/', '')}/ (${count(OUT)} files)`);
+console.log(`${site.name}: ${written.length} pages (${model.upcoming.length} upcoming, ${model.past.length} in the archive) → ${OUT.replace(HERE + '/', '')}/ (${count(OUT)} files)`);

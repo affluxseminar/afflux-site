@@ -1,6 +1,6 @@
 # Staging test checklist
 
-Run on `test.affluxseminar.org` before the real launch. Tick each line; anything that fails is fixed
+Run on `test.eeeseminar.org` before the real launch. Tick each line; anything that fails is fixed
 and re-run before moving on. Use at least two real mailboxes (one Gmail, one Mail.ru or Outlook)
 and two devices (a phone and a computer). Where it says "from Russia", use a Russian network
 without VPN; where it says "from abroad", any non-Russian network or a foreign SIM.
@@ -15,7 +15,7 @@ without VPN; where it says "from abroad", any non-Russian network or a foreign S
 
 ## Registration and sign-in
 - [ ] Register with mailbox A from a phone; the confirmation mail arrives within 2 minutes; sender
-      shows as "AFFLUX <…@affluxseminar.org>"; headers show SPF pass, DKIM pass, DMARC pass.
+      shows as "EEES <…@eeeseminar.org>"; headers show SPF pass, DKIM pass, DMARC pass.
 - [ ] Open the link on the phone → "Continue" → returned to the page you came from.
 - [ ] Open the same link again → "This link no longer works".
 - [ ] Before opening a link: Join and Recording pages show the gate, never a Zoom address.

@@ -1,43 +1,39 @@
-# DNS records for affluxseminar.org (template)
+# DNS records for eeeseminar.org
 
-Replace `affluxseminar.org` with the real domain. DNS lives in Cloudflare; the domain can be bought
-there too (Cloudflare Registrar), which keeps the number of providers at a minimum.
+DNS lives in Cloudflare, where the domain was bought (Cloudflare Registrar, 24 Oct 2026).
+`tools/cf-setup.mjs` creates all of this; the table is what it should look like.
 
 | Type | Name | Value | Purpose |
 |---|---|---|---|
-| — | `affluxseminar.org` | Worker custom domain (set in Cloudflare → Workers → afflux-server → Domains) | the site and the server |
-| MX | `affluxseminar.org` | the three `route*.mx.cloudflare.net` hosts that Email Routing gives you | incoming mail to `seminar@affluxseminar.org` |
-| TXT | `affluxseminar.org` | `v=spf1 include:_spf.mx.cloudflare.net include:spf.smtp2go.com ~all` | who may send as `@affluxseminar.org`: Email Routing (forwarding) and SMTP2GO |
-| CNAME ×3 | as given by SMTP2GO → Sending → Verified Senders → Domains | SMTP2GO's DKIM and return-path records | SMTP2GO's signature and bounce handling |
-| TXT | `_dmarc` | `v=DMARC1; p=quarantine; rua=mailto:seminar@affluxseminar.org; adkim=r; aspf=r` | ask receivers to quarantine unauthenticated mail; the setup script starts with `p=none` — switch to `quarantine` after two weeks of clean reports |
+| A ×4 | `eeeseminar.org` | `185.199.108.153`, `.109.153`, `.110.153`, `.111.153`, DNS only (grey cloud) | the public site on GitHub Pages |
+| AAAA ×4 | `eeeseminar.org` | `2606:50c0:8000::153` … `8003::153`, DNS only | the same over IPv6 |
+| CNAME | `www` | `affluxseminar.github.io`, DNS only | GitHub Pages redirects www to the apex |
+| — | `admin.eeeseminar.org` | Worker custom domain (`wrangler.toml`), behind Cloudflare Access | the admin |
+| MX | `eeeseminar.org` | the three `route*.mx.cloudflare.net` hosts that Email Routing gives you | incoming mail to `seminar@eeeseminar.org` |
+| TXT | `eeeseminar.org` | `v=spf1 include:_spf.mx.cloudflare.net include:spf.smtp2go.com ~all` | who may send as `@eeeseminar.org`: Email Routing (forwarding) and SMTP2GO |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:seminar@eeeseminar.org; adkim=r; aspf=r` | DMARC reports; switch to `quarantine` after two weeks of clean reports |
+
+The public site must stay DNS only: Russian providers throttle Cloudflare-proxied sites, GitHub
+Pages they do not. In GitHub: Settings → Pages → custom domain `eeeseminar.org`, Enforce HTTPS.
 
 Email Routing: Cloudflare → Email → Email Routing → destination address = the mailbox you read
-(it is verified once by a message to that mailbox) → rule `seminar@affluxseminar.org → destination`.
+(verified once, account-wide) → rule `seminar@eeeseminar.org → destination`.
 
-Replies from a mail client (or Gmail's "Send mail as"): outgoing server `mail.smtp2go.com`,
-port 587 (STARTTLS), user and password = an SMTP user created in SMTP2GO → Sending → SMTP Users.
+Replies from a mail client (or Gmail's "Send mail as"), if ever needed: outgoing server
+`mail.smtp2go.com`, port 587 (STARTTLS), with an SMTP user created in SMTP2GO; its three CNAME
+records (DKIM, return path) then go here too.
 
-Watching delivery: SMTP2GO's own reports show delivered, bounced and rejected per receiver;
-for DMARC aggregate reports point `rua=` at a free DMARC report reader (for example
-dmarcian's free tier or Cloudflare's DMARC Management, which is built into the dashboard).
-Nothing is registered with any Russian provider.
+## The former domains: affluxseminar.org and affluxseminar.com
 
-Reading mailbox: any mailbox outside Russian providers — Yahoo, or a domain mailbox at Infomaniak
-(Switzerland), mailbox.org (Germany) or Migadu (Switzerland). Email Routing forwards to it; the
-choice can be changed at any time by editing one rule.
-
-## The second domain: affluxseminar.com
-
-Bought alongside the .org so that nobody else can. It is never a second site: add it as a zone in
-the same Cloudflare account and
+The seminar was AFFLUX until 24 Oct 2026. Both domains stay registered (renewal October 2027) and
+only redirect, so that old links and announcements keep working:
 
 | Type | Name | Value | Purpose |
 |---|---|---|---|
-| Redirect rule | every request to the .com, and `www.affluxseminar.org` on the .org | `https://affluxseminar.org` + path, 301 (single redirect rules; `tools/cf-setup.mjs` creates them) | one address in links, search engines and mail signatures |
-| A / AAAA | `@` and `www` | `192.0.2.1` / `100::` proxied (a placeholder so the redirect rule has something to attach to) | — |
-| CNAME (on the .org) | `www` | `affluxseminar.org`, proxied | lets the www redirect fire |
-| TXT | `@` | `v=spf1 -all` | no mail is ever sent from the .com |
-| TXT | `_dmarc` | `v=DMARC1; p=reject; rua=mailto:seminar@affluxseminar.org` | spoofed mail "from" the .com is rejected |
-| — | no MX records | | the .com receives no mail either |
+| Redirect rule | `admin.affluxseminar.org` | `https://admin.eeeseminar.org` + path, 301 | the old admin address |
+| Redirect rule | everything else on affluxseminar.org and .com | `https://eeeseminar.org` + path, 301 | old links land on the same page |
+| A / AAAA | `@`, `www`, `admin` | `192.0.2.1` / `100::`, proxied (placeholders the rules attach to) | — |
+| MX, SPF, rule | affluxseminar.org | unchanged | mail to `seminar@affluxseminar.org` still arrives |
 
-Use the .org everywhere; mention the .com nowhere.
+A 301 is small enough to pass the throttling of Cloudflare-proxied hosts. Use eeeseminar.org
+everywhere; mention the former domains nowhere.

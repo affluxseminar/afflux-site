@@ -1,9 +1,10 @@
-/* AFFLUX — visual system
+/* EEES — visual system
    Type:    Old Standard TT (wordmark, titles, dates, the figure caption) + Golos Text (everything else), self-hosted
    Colour:  three appearances — Deep (midnight, default), Dark (navy), Light (low-glare stone) —
             with one spectral cyan-green accent, used sparingly
    Grid:    12 columns; sections = marginal label (2/12) + body (10/12)
-   Motif:   the wordmark justified across the measure; one figure (streamlines of a point sink) */
+   Motif:   the wordmark justified across the measure, each letter glossed by its word
+            (Economics, Energy, Environment, Seminar); one figure (streamlines of a point sink) */
 
 @font-face {
   font-family: 'Old Standard TT';
@@ -250,12 +251,34 @@ html.js .theme { display: inline-flex; }
 /* ---------- masthead (front page) ---------- */
 
 .mast { padding-block: calc(var(--space) * 0.5) calc(var(--space) * 0.3); }
+/* Four capitals spread across the measure. The negative margins are the side bearings of the outer
+   letters (E 0.047 em on the left, S 0.042 em on the right), so their ink meets the edges of the measure,
+   as the text below does. Under each letter, in italic, the word it stands for: set from the letter's
+   ink (the last one from its right edge); on the narrowest phones the words give way. */
 .wordmark {
+  --wm: clamp(3.6rem, 19vw, 15.5rem);
+  --wm-word: clamp(0.75rem, 0.35rem + 1.1vw, 1.45rem);
   display: flex; justify-content: space-between; align-items: baseline;
-  font: 400 clamp(3.3rem, 15vw, 14.4rem)/0.86 var(--serif);
-  letter-spacing: -0.01em;
-  margin-inline: -0.02em;
+  font: 400 var(--wm)/0.86 var(--serif);
+  letter-spacing: 0;
+  margin-inline: calc(var(--wm) * -0.047) calc(var(--wm) * -0.042);
   user-select: none;
+}
+.wordmark > span { position: relative; }
+.wordmark.has-words { padding-bottom: calc(var(--wm) * 0.05 + var(--wm-word) * 1.25); }
+.wordmark > span[data-word]::after {
+  content: attr(data-word);
+  position: absolute; top: 100%; left: calc(var(--wm) * 0.047);
+  margin-top: calc(var(--wm) * 0.05);
+  font: italic 400 var(--wm-word)/1.25 var(--serif);
+  letter-spacing: 0.01em;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.wordmark > span[data-word]:last-child::after { left: auto; right: calc(var(--wm) * 0.042); }
+@media (max-width: 21.9rem) {   /* below ~350 px the third and fourth words would touch */
+  .wordmark.has-words { padding-bottom: 0; }
+  .wordmark > span[data-word]::after { display: none; }
 }
 .mast-sub {
   margin-top: clamp(1rem, 2.4vw, 1.75rem);

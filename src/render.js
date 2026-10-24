@@ -1,4 +1,4 @@
-/* AFFLUX — shared templates.
+/* EEE Seminar — shared templates.
    Runs unchanged in Node (build.mjs) and in the browser (preview router).
    Pure functions: (data, context) -> HTML strings. No DOM access here. */
 (function (root) {
@@ -159,7 +159,7 @@
     const samePath = page.path; // language-neutral path of this page
     return `<header class="site-head${page.kind === 'home' ? ' is-home' : ''}" id="top">
   <div class="wrap head-grid">
-    <a class="brand" href="${ctx.url(lang, '/')}"><span class="brand-mark">AFFLUX</span><span class="brand-sub">${esc(s.subtitle)}</span></a>
+    <a class="brand" href="${ctx.url(lang, '/')}"><span class="brand-mark">${esc(site.mark)}</span><span class="brand-sub">${esc(s.subtitle)}</span></a>
     <nav class="site-nav" aria-label="${esc(s.navLabel)}">${nav}</nav>
     <fieldset class="theme" data-theme-control>
       <legend class="vh">${esc(s.appearance)}</legend>
@@ -188,7 +188,7 @@
     return `<footer class="site-foot">
   <div class="wrap foot-grid">
     <div class="foot-brand">
-      <span class="brand-mark">AFFLUX</span>
+      <span class="brand-mark">${esc(site.mark)}</span>
       <p>${esc(s.subtitle)}<br>${esc(convenersText(ctx))}${s.since ? `<br>${esc(s.since)}` : ''}</p>
     </div>
     <div class="foot-col">
@@ -326,8 +326,8 @@
     const following = model.upcoming.slice(1, 4);
     const recent = model.past.filter((t) => t.video).slice(0, 4);
 
-    return `<section class="mast" aria-label="AFFLUX">
-  <h1 class="wordmark" aria-label="AFFLUX"><span aria-hidden="true">A</span><span aria-hidden="true">F</span><span aria-hidden="true">F</span><span aria-hidden="true">L</span><span aria-hidden="true">U</span><span aria-hidden="true">X</span></h1>
+    return `<section class="mast" aria-label="${esc(site.name)}">
+  <h1 lang="en" class="wordmark${(site.markWords || []).length ? ' has-words' : ''}" aria-label="${esc(site.name)}">${[...site.mark].map((ch, i) => `<span aria-hidden="true"${site.markWords && site.markWords[i] ? ` data-word="${esc(site.markWords[i])}"` : ''}>${esc(ch)}</span>`).join('')}</h1>
   <p class="mast-sub"><span>${esc(s.subtitle)}</span><span>${esc(convenersText(ctx))}</span>${s.since ? `<span class="mast-since">${esc(s.since)}</span>` : ''}</p>
 </section>
 
@@ -533,11 +533,11 @@ ${sections || `<section class="sec">
     const lang = route.lang;
     const s = site.strings[lang];
     const c = Object.assign({}, ctx, { lang, site });
-    const base = `AFFLUX`;
+    const base = site.name;
     let title, description, main, talk = null;
     switch (route.kind) {
       case 'home':
-        title = `${base}: ${s.subtitle}`;
+        title = `${site.mark}: ${s.subtitle}`;
         description = s.description;
         main = home(c, model);
         break;

@@ -81,7 +81,7 @@ with sync_playwright() as p:
     resp=pg.goto(B+'/go/join/2026-10-15-test/'); ok(resp.status==401, 'still gated before verification')
     pg.goto(B+'/account/'); ok(pg.url.endswith('/signin/'), 'account redirects to signin before verification')
     link=get(M+'/_last_link')['link']; ok(link is not None and 'token=' in link, 'magic link issued')
-    ok(len(get(M+'/_outbox'))==1 and 'Confirm your AFFLUX registration' in get(M+'/_outbox')[0]['subject'], 'registration mail sent with the right subject')
+    ok(len(get(M+'/_outbox'))==1 and 'Confirm your EEES registration' in get(M+'/_outbox')[0]['subject'], 'registration mail sent with the right subject')
     pg.goto(link); ok(pg.url.endswith('/account/verify') and 'token=' not in pg.url, 'token stripped from the address by a redirect')
     ok('p*****@example.org' in pg.content() and 'different browser' not in pg.content(), 'confirm page names the account (masked); same browser: no cross-device warning')
     pg.goto(link); ok('p*****@example.org' in pg.content(), 'opening the link again still shows the page (token not consumed by GET)')
@@ -137,7 +137,7 @@ with sync_playwright() as p:
     pg.goto(B+'/account/'); ok('Comments and suggestions' in pg.content(), 'account page links to comments and suggestions')
     pg.goto(B+'/account/feedback'); pg.fill('#subject','A remark'); pg.fill('#message','Line one.\r\nLine two \x01with a control character.'); pg.click('button:has-text("Send")'); pg.wait_for_url('**/account/feedback?s=sent'); pg.wait_for_timeout(200)
     ok('has been sent' in pg.content(), 'feedback sent page shown')
-    fb=get(M+'/_outbox'); ok(len(fb)==1 and fb[0]['to']==['seminar@affluxseminar.org'] and fb[0]['subject']=='[AFFLUX] A remark', f'feedback mailed to the seminar address ({len(fb)} mail)')
+    fb=get(M+'/_outbox'); ok(len(fb)==1 and fb[0]['to']==['seminar@eeeseminar.org'] and fb[0]['subject']=='[EEES] A remark', f'feedback mailed to the seminar address ({len(fb)} mail)')
     ok(any(h['header']=='Reply-To' and h['value']=='person@example.org' for h in fb[0]['custom_headers']) and 'Test Person' in fb[0]['text_body'] and 'Line one.\nLine two with a control character.' in fb[0]['text_body'], 'feedback carries Reply-To, name and a cleaned plain-text body')
     r=pg.request.post(B+'/api/feedback', form={'lang':'en','message':'   '}, headers={'Origin':B}); ok(r.status==422, 'empty feedback refused')
     codes=[pg.request.post(B+'/api/feedback', form={'lang':'en','message':f'm{i}'}, headers={'Origin':B}, max_redirects=0).status for i in range(6)]

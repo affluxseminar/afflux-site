@@ -1,9 +1,16 @@
 {
-  "name": "AFFLUX",
-  "baseUrl": "https://affluxseminar.org",
+  "name": "EEES",
+  "mark": "EEES",
+  "markWords": [
+    "Economics",
+    "Energy",
+    "Environment",
+    "Seminar"
+  ],
+  "baseUrl": "https://eeeseminar.org",
   "defaultTimezone": "Europe/Moscow",
   "defaultDurationMinutes": 90,
-  "email": "seminar@affluxseminar.org",
+  "email": "seminar@eeeseminar.org",
   "photoBase": "/photos/",
   "ogImage": "/assets/og-default.png",
   "conveners": [
@@ -63,7 +70,7 @@
   "strings": {
     "en": {
       "subtitle": "Seminar on the Economics of Energy and the Environment",
-      "description": "AFFLUX is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky: energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
+      "description": "EEES is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky: energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
       "convenedBy": "Convened by {names}",
       "and": "and",
       "nav": {
@@ -105,7 +112,7 @@
       "details": "Full abstract and biography",
       "recordingShort": "Recording",
       "slidesShort": "Slides",
-      "fieldCaption": "Streamlines of a plane potential flow: a uniform stream superimposed with a point sink and a vortex at the same point; near the sink the lines become logarithmic spirals. Afflux: a flowing towards.",
+      "fieldCaption": "Streamlines of a plane potential flow: a uniform stream superimposed with a point sink and a vortex at the same point; near the sink the lines become logarithmic spirals.",
       "contact": "Contact",
       "proposeTalk": "To propose a talk, write to",
       "notFound": "Page not found",
@@ -202,19 +209,19 @@
       "since": "Since 2011",
       "minutes": "Minutes of the session (PDF)",
       "minutesShort": "Minutes",
-      "fieldCaptionHtml": "Streamlines of a plane potential flow: a uniform stream superimposed with a point sink and a vortex at the same point; near the sink the lines become logarithmic spirals. <i>Afflux</i>: a flowing towards.",
+      "fieldCaptionHtml": "Streamlines of a plane potential flow: a uniform stream superimposed with a point sink and a vortex at the same point; near the sink the lines become logarithmic spirals.",
       "fieldCaptionSourceHtml": "The same flow with the sink turned into a source. Your letter is on its way.",
       "joinOpenNote": "Open to all. The meeting opens when the host starts it.",
       "subscribeTitle": "Subscribe",
       "subscribeLead": "Announcements of the sessions are sent by email about a week ahead, with the title, the abstract and the link to join.",
       "subscribeHow": "To subscribe, write to the seminar address. Please say whether you would like announcements of English-language sessions, Russian-language sessions, or both.",
       "subscribeButton": "Write to subscribe",
-      "subscribeSubject": "Subscription to AFFLUX announcements",
+      "subscribeSubject": "Subscription to EEES announcements",
       "subscribeNote": "The address is used only for the seminar’s own mailings and is never published or passed on. Every announcement ends with an unsubscribe link; you can also unsubscribe by writing to the same address. This site itself keeps no data about its visitors: no accounts, no forms, no analytics."
     },
     "ru": {
       "subtitle": "Семинар «Экономика энергетики и окружающей среды»",
-      "description": "AFFLUX — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского: энергетические рынки, природные ресурсы и окружающая среда, сложные системы, технологические изменения и оптимизация.",
+      "description": "EEES — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского: энергетические рынки, природные ресурсы и окружающая среда, сложные системы, технологические изменения и оптимизация.",
       "convenedBy": "Руководители семинара: {names}",
       "and": "и",
       "nav": {
@@ -256,7 +263,7 @@
       "details": "Полная аннотация и биография",
       "recordingShort": "Запись",
       "slidesShort": "Презентация",
-      "fieldCaption": "Линии тока плоского потенциального течения: суперпозиция однородного потока, точечного стока и вихря в той же точке; вблизи стока линии тока переходят в логарифмические спирали. Afflux — приток, течение к точке.",
+      "fieldCaption": "Линии тока плоского потенциального течения: суперпозиция однородного потока, точечного стока и вихря в той же точке; вблизи стока линии тока переходят в логарифмические спирали.",
       "contact": "Контакт",
       "proposeTalk": "Чтобы предложить доклад, напишите на",
       "notFound": "Страница не найдена",
@@ -353,25 +360,25 @@
       "since": "С 2011 года",
       "minutes": "Протокол заседания (PDF)",
       "minutesShort": "Протокол",
-      "fieldCaptionHtml": "Линии тока плоского потенциального течения: суперпозиция однородного потока, точечного стока и вихря в той же точке; вблизи стока линии тока переходят в логарифмические спирали. <i>Afflux</i> — приток, течение к точке.",
+      "fieldCaptionHtml": "Линии тока плоского потенциального течения: суперпозиция однородного потока, точечного стока и вихря в той же точке; вблизи стока линии тока переходят в логарифмические спирали.",
       "fieldCaptionSourceHtml": "То же течение, но сток обращён в источник. Письмо в пути.",
       "joinOpenNote": "Заседание открытое. Конференция откроется, когда её начнёт организатор.",
       "subscribeTitle": "Подписка",
       "subscribeLead": "Анонсы заседаний рассылаются по почте примерно за неделю: название, аннотация и ссылка для подключения.",
       "subscribeHow": "Чтобы подписаться, напишите на адрес семинара. Укажите, пожалуйста, анонсы каких заседаний вы хотите получать: на русском языке, на английском или все.",
       "subscribeButton": "Написать, чтобы подписаться",
-      "subscribeSubject": "AFFLUX: subscription to announcements",
+      "subscribeSubject": "EEES: subscription to announcements",
       "subscribeNote": "Адрес используется только для рассылок семинара, не публикуется и никому не передаётся. В конце каждого письма есть ссылка для отписки; можно и просто написать на тот же адрес. Сам сайт не хранит никаких данных о посетителях: здесь нет аккаунтов, форм и счётчиков."
     }
   },
   "about": {
     "en": [
-      "AFFLUX is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky. It meets online and brings together economists, physicists, engineers and policy researchers working on energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
+      "EEES is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky. It meets online and brings together economists, physicists, engineers and policy researchers working on energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
       "Talks are given in English or in Russian. Sessions are open: the link to join is on the page of each talk, and announcements are sent to the mailing list about a week ahead.",
       "Recordings are published with the speakers' permission, usually within a few days of the session; slides and the minutes of the discussion are published as they arrive. Comments and suggestions are welcome at the seminar address."
     ],
     "ru": [
-      "AFFLUX — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского. Семинар проходит онлайн и объединяет экономистов, физиков, инженеров и исследователей политики, работающих с энергетическими рынками, природными ресурсами и окружающей средой, сложными системами, технологическими изменениями и оптимизацией.",
+      "EEES — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского. Семинар проходит онлайн и объединяет экономистов, физиков, инженеров и исследователей политики, работающих с энергетическими рынками, природными ресурсами и окружающей средой, сложными системами, технологическими изменениями и оптимизацией.",
       "Доклады читаются на английском или на русском языке. Заседания открытые: ссылка для подключения — на странице доклада, а анонс рассылается подписчикам примерно за неделю.",
       "Записи публикуются с согласия докладчиков, как правило, в течение нескольких дней после заседания; презентации и протоколы обсуждений — по мере поступления. Комментарии и пожелания руководителям семинара можно направить на адрес семинара."
     ]

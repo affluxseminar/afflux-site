@@ -1,4 +1,5 @@
-# AFFLUX application server (Cloudflare Worker).
+# EEES application server (Cloudflare Worker). The Worker and database names keep the former
+# name (afflux-…): they are internal, and renaming them would mean new databases.
 # Secrets are never here: set them with `wrangler secret put NAME` or in the dashboard:
 #   SIGNING_KEY        32+ random bytes, base64 (openssl rand -base64 32) — cookies, throttle keys, unsubscribe tokens; rotatable
 #   INDEX_KEY          32+ random bytes, base64 — the address index; stable (rotation = reindex, see admin → Maintenance)
@@ -17,7 +18,7 @@ workers_dev = false
 # sites are throttled); the admin host serves the editor, the health check and the assets the
 # editor's pages use, and sends every other path to the public site (src/index.js).
 routes = [
-  { pattern = "admin.affluxseminar.org", custom_domain = true }
+  { pattern = "admin.eeeseminar.org", custom_domain = true }
 ]
 
 [assets]
@@ -31,10 +32,10 @@ crons = ["17 4 * * *"]
 
 [vars]
 REGISTRATION = "closed"                             # the public site collects nothing: registration, sign-in and accounts are shut
-SITE_BASE = "https://admin.affluxseminar.org"       # this Worker's own origin (same-origin checks, programme.json)
-PUBLIC_SITE = "https://affluxseminar.org"           # where the public site lives; other paths on this host go there
+SITE_BASE = "https://admin.eeeseminar.org"          # this Worker's own origin (same-origin checks, programme.json)
+PUBLIC_SITE = "https://eeeseminar.org"              # where the public site lives; other paths on this host go there
 SMTP2GO_BASE_URL = "https://api.smtp2go.com"
-MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"    # the one address: sign-in links, announcements, replies
+MAIL_FROM = "EEES <seminar@eeeseminar.org>"         # the one address: sign-in links, announcements, replies
 # FEEDBACK_TO = "…"                                # where participants' comments go; defaults to the MAIL_FROM address
 SESSION_MINUTES = "129600"                         # 90 days, extended on each visit
 SIGNUP_LINK_HOURS = "24"
@@ -70,18 +71,18 @@ migrations_dir = "migrations/links"
 [observability]
 enabled = false
 
-# Staging: the same code on test.affluxseminar.org with its own databases and a test sender,
+# Staging: the same code on test.eeeseminar.org with its own databases and a test sender,
 # so the whole flow can be exercised with real mail, real phones and real networks before launch.
 # Create its three databases (afflux_identity_staging …), apply the migrations, set the same three
 # secrets with different random values, deploy with `wrangler deploy --env staging`.
 [env.staging]
 name = "afflux-server-staging"
-routes = [ { pattern = "test.affluxseminar.org", custom_domain = true } ]
+routes = [ { pattern = "test.eeeseminar.org", custom_domain = true } ]
 [env.staging.vars]
 REGISTRATION = "open"
-SITE_BASE = "https://test.affluxseminar.org"
+SITE_BASE = "https://test.eeeseminar.org"
 SMTP2GO_BASE_URL = "https://api.smtp2go.com"
-MAIL_FROM = "AFFLUX test <seminar@affluxseminar.org>"
+MAIL_FROM = "EEES test <seminar@eeeseminar.org>"
 SESSION_MINUTES = "129600"
 SIGNUP_LINK_HOURS = "24"
 LOGIN_LINK_MINUTES = "20"
@@ -119,7 +120,7 @@ REGISTRATION = "open"
 DEBUG_ERRORS = "yes-local-only"
 SITE_BASE = "http://localhost:8788"
 SMTP2GO_BASE_URL = "http://127.0.0.1:9101"
-MAIL_FROM = "AFFLUX <seminar@affluxseminar.org>"
+MAIL_FROM = "EEES <seminar@eeeseminar.org>"
 SESSION_MINUTES = "129600"
 SIGNUP_LINK_HOURS = "24"
 LOGIN_LINK_MINUTES = "20"

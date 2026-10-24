@@ -2,6 +2,12 @@
 
 Order of operations for one person doing everything, from Moscow, honestly (no VPN, real details).
 
+**24 October 2026 — new name and domain.** The seminar is EEES (Economics of Energy and
+Environment Seminar); the site moved to eeeseminar.org (bought in Cloudflare Registrar), the admin
+to admin.eeeseminar.org, the address to seminar@eeeseminar.org. affluxseminar.org and .com answer
+with 301s to the same path (step "retire" of `tools/cf-setup.mjs`); seminar@affluxseminar.org still
+forwards. The text below keeps the former domain where it describes what was done then.
+
 **13 October 2026 — where things stand.** The site is live at affluxseminar.org as an open site
 without registration (see README "Status" and ADR-001, last amendment). Hosting changed after the
 first day: Cloudflare-proxied pages are throttled in Russia (section 0 below was wrong about that),

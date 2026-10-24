@@ -1,4 +1,9 @@
-# AFFLUX — site
+# EEES — site
+
+EEES (Economics of Energy and Environment Seminar) is the seminar's name since 24 October 2026;
+until then it was AFFLUX. Repository, Worker, database and cookie names keep `afflux`: they are
+internal, and the former domains (`affluxseminar.org`, `.com`) answer with 301s to the same path on
+`eeeseminar.org`.
 
 Static, bilingual (EN at `/`, RU at `/ru/`), data-driven. One JSON file per seminar holds the
 programme; a dependency-free build script renders every page. The public pages make no third-party
@@ -10,9 +15,9 @@ localisation of personal data and on sign-in methods made the account-based desi
 a seminar run from Russia with this audience). The link to join and the recording are public
 fields of each talk, shown to everyone; the meeting itself does not start before its host
 (Zoom settings). Announcements go out from the seminar's own mailbox; the Subscribe page tells
-people to write to it. The public site is served by GitHub Pages at `affluxseminar.org`
+people to write to it. The public site is served by GitHub Pages at `eeeseminar.org`
 (reachable from Russia, where Cloudflare-proxied sites are throttled); the Worker in `server/` is
-the admin only, at `admin.affluxseminar.org`, with `REGISTRATION = "closed"`. The registration,
+the admin only, at `admin.eeeseminar.org`, with `REGISTRATION = "closed"`. The registration,
 sign-in and announcement code described further down is dormant, kept for a future that can host
 it lawfully; `docs/ADR-001-identity-and-access.md`, amendment of 13 Oct 2026, records the decision.
 
@@ -176,8 +181,8 @@ only outbound request a visitor's browser makes is the subscription form's POST 
 
 `.github/workflows/build.yml` builds the site from the content repository, runs the server's
 end-to-end checks, publishes `dist/` to GitHub Pages (the public site, custom domain
-`affluxseminar.org`, HTTPS enforced — Settings → Pages, source "GitHub Actions") and deploys the
-Worker (the admin, `admin.affluxseminar.org`) with two repository secrets (`CLOUDFLARE_API_TOKEN`,
+`eeeseminar.org`, HTTPS enforced — Settings → Pages, source "GitHub Actions") and deploys the
+Worker (the admin, `admin.eeeseminar.org`) with two repository secrets (`CLOUDFLARE_API_TOKEN`,
 `CLOUDFLARE_ACCOUNT_ID`). It runs on push, on demand, and every 10 minutes when the programme
 changed. DNS, Cloudflare Access on the admin and the rest of the Cloudflare side are set by
 `tools/cf-setup.mjs` (the "Cloudflare setup" workflow). The static site alone works on any static
@@ -190,7 +195,8 @@ and `email`; then follow `server/README.md` → "Setting up".
 
 Per page: `<title>`, description, canonical URL, `hreflang` alternates (en, ru, x-default),
 OpenGraph and Twitter card tags with `assets/og-default.png` (1200×630, the wordmark and the field on
-the deep background), `theme-color`. Per talk: a `schema.org/Event` JSON-LD block with start and end
+the deep background; it, the icons and the YouTube channel's pictures are drawn by
+`tools/brand-images.py`), `theme-color`. Per talk: a `schema.org/Event` JSON-LD block with start and end
 time, online attendance, speaker and organiser, and the recording as `recordedIn` when present.
 Plus `sitemap.xml` with hreflang pairs, `robots.txt`, `404.html` and `ru/404.html`.
 
@@ -205,9 +211,9 @@ Plus `sitemap.xml` with hreflang pairs, `robots.txt`, `404.html` and `ru/404.htm
 - **Grid.** Twelve columns. Sections are a marginal label plus a body column, like a journal's
   sidenotes; on tablets the label column widens, on phones it stacks. Lists of talks are ledgers with
   hairlines, not cards. Left-aligned throughout.
-- **Identity.** The wordmark is set justified across the full measure, so the six letters are the
-  grid. The only illustration is Fig. 1: streamlines of a point sink — *afflux*, a flowing towards —
-  computed from a small vector field in `src/field.js`, shared by the build, the server pages and
+- **Identity.** The wordmark EEES is set justified across the full measure, so the four letters are
+  the grid; under each, in italic, the word it stands for (Economics, Energy, Environment, Seminar).
+  The only illustration is Fig. 1: streamlines of a point sink (a flowing towards), computed from a small vector field in `src/field.js`, shared by the build, the server pages and
   the live version; every fourth trajectory carries the accent.
 - **Accessibility.** Landmarks, skip link, visible focus in every appearance, `aria-current` on
   navigation, native radio buttons behind the appearance control, `lang` on fallback text, form

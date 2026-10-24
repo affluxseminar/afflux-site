@@ -1,4 +1,4 @@
-/* AFFLUX application server. Routes are matched here; everything else is a static page on Pages. */
+/* EEES application server. Routes are matched here; everything else is a static page on Pages. */
 import { withHeaders, sameOrigin, allowGeneric, bodyTooLarge, MAX_UPLOAD_BODY } from './security.js';
 import * as auth from './routes/auth.js';
 import { getGo } from './routes/go.js';
@@ -27,7 +27,7 @@ function closedRegistration(env, p, lang, m) {
   return new Response('Not found', { status: 404 });
 }
 
-/* The Worker lives on its own host (admin.affluxseminar.org) while the public site is served
+/* The Worker lives on its own host (admin.eeeseminar.org) while the public site is served
    elsewhere (PUBLIC_SITE). On the admin host only the admin, the health check and the static assets
    the admin pages use are served; any other path is sent to the public site. Without PUBLIC_SITE
    (the dev environment) the Worker serves the whole static site itself, as before. */

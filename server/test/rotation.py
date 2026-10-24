@@ -47,7 +47,7 @@ try:
     v=vars_get(); old_i, old_d = v['INDEX_KEY'], v['DATA_KEY']
     v['INDEX_KEY']=base64.b64encode(os.urandom(32)).decode(); v['DATA_KEY']=base64.b64encode(os.urandom(32)).decode(); v['INDEX_KEY_PREVIOUS']=old_i; v['DATA_KEY_PREVIOUS']=old_d
     vars_set(v); restart()
-    ok(signin('seed7@example.org')=='Your AFFLUX sign-in link', 'lookup through INDEX_KEY_PREVIOUS finds a seeded identity (sign-in, not registration)')
+    ok(signin('seed7@example.org')=='Your EEES sign-in link', 'lookup through INDEX_KEY_PREVIOUS finds a seeded identity (sign-in, not registration)')
     # the first WRITE of the new generation advances the fence (here: the first migration pass); from then on a
     # writer still on the old generation is refused — so "0 remaining" can never be followed by an old-key write
     maint('reencrypt')
@@ -76,7 +76,7 @@ try:
     rows=d1('afflux_users', f"SELECT COUNT(*) n FROM users WHERE substr(name_enc,1,9) != '{fp(v['DATA_KEY'])}.'")[0]['n']; ok(rows==0, 'every profile is under the new data key')
     # 5. remove the previous keys: everything must keep working on the new keys alone
     del v['INDEX_KEY_PREVIOUS']; del v['DATA_KEY_PREVIOUS']; vars_set(v); restart(); d1('afflux_users', "DELETE FROM throttle")
-    ok(signin('seed599@example.org' if N>599 else 'seed1@example.org')=='Your AFFLUX sign-in link', 'after removing previous keys, the last seeded identity is still found (no duplicate created)')
+    ok(signin('seed599@example.org' if N>599 else 'seed1@example.org')=='Your EEES sign-in link', 'after removing previous keys, the last seeded identity is still found (no duplicate created)')
     ok(d1('afflux_identity',"SELECT COUNT(*) n FROM identities")[0]['n']==total, 'identity count unchanged through the rotation')
 finally:
     open(os.path.join(CWD,'.dev.vars.dev'),'w').write(backup)

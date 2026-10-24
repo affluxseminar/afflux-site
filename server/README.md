@@ -1,4 +1,4 @@
-# AFFLUX application server
+# EEES application server
 
 The private layer of the site: registration and sign-in by magic link, sessions, the protected
 `/go/` links, account preferences, the announcement mailing and its admin. A single Cloudflare
@@ -8,7 +8,7 @@ The static site (`../dist`) is served by the same deployment as plain files.
 
 **13 October 2026.** On the live site `REGISTRATION = "closed"` (wrangler.toml): registration,
 sign-in, accounts, protected links and announcements are switched off and the admin is the
-programme editor only, on `admin.affluxseminar.org`; the public site is served by GitHub Pages.
+programme editor only, on `admin.eeeseminar.org`; the public site is served by GitHub Pages.
 Zoom and recording links are public fields of the talk (see the root README). Everything below
 about accounts and protected links describes the dormant mode.
 

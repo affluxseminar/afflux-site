@@ -30,7 +30,7 @@ export function shell({ lang, kind, path, title, description, main }) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="${cspPolicy()}">
 <meta name="robots" content="noindex">
-<title>${esc(title)}, AFFLUX</title>
+<title>${esc(title)}, EEES</title>
 <meta name="description" content="${esc(description || '')}">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#070E1A">

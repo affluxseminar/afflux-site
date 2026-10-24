@@ -1,6 +1,6 @@
-/* AFFLUX — the live field. Tracer particles advected through the same vector field as Fig. 1,
+/* EEES — the live field. Tracer particles advected through the same vector field as Fig. 1,
    drawn on a canvas over the printed streamlines. Optional: the page is complete without it.
-   Modes: "sink" (default, the afflux), "source" (the reversed field: a letter leaving),
+   Modes: "sink" (default, a flowing towards), "source" (the reversed field: a letter leaving),
    and a one-off "gather" on form submit. Off under prefers-reduced-motion. */
 (function () {
   'use strict';

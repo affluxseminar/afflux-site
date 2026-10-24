@@ -1,4 +1,4 @@
-/* AFFLUX — client enhancements. The site works without this file;
+/* EEES — client enhancements. The site works without this file;
    with it: local time, live status, header state, the appearance control. */
 (function () {
   'use strict';

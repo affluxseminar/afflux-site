@@ -189,8 +189,8 @@ ${orphans.length ? `<section class="sec"><h2 class="sec-label">Stored without a 
         const whoT = L(talk.speaker) + (talk.affiliation ? ` (${L(talk.affiliation)})` : '');
         const abs = String(L(talk.abstract)).split(/\n\s*\n/)[0];
         pre = lang === 'ru'
-          ? { list: 'ru', subject: `AFFLUX, ${date}: ${L(talk.title)}`, text: `Семинар «Экономика энергетики и окружающей среды» (AFFLUX)\n${date}, ${talk.time} по московскому времени\n\n${whoT}\n${L(talk.title)}\n\n${abs}\n\nПодробности, подключение и ссылка на запись: ${pageUrl}` }
-          : { list: 'en', subject: `AFFLUX, ${date}: ${L(talk.title)}`, text: `Seminar on the Economics of Energy and the Environment (AFFLUX)\n${date}, ${talk.time} Moscow time\n\n${whoT}\n${L(talk.title)}\n\n${abs}\n\nDetails, joining and the recording: ${pageUrl}` };
+          ? { list: 'ru', subject: `EEES, ${date}: ${L(talk.title)}`, text: `Семинар «Экономика энергетики и окружающей среды» (EEES)\n${date}, ${talk.time} по московскому времени\n\n${whoT}\n${L(talk.title)}\n\n${abs}\n\nПодробности, подключение и ссылка на запись: ${pageUrl}` }
+          : { list: 'en', subject: `EEES, ${date}: ${L(talk.title)}`, text: `Seminar on the Economics of Energy and the Environment (EEES)\n${date}, ${talk.time} Moscow time\n\n${whoT}\n${L(talk.title)}\n\n${abs}\n\nDetails, joining and the recording: ${pageUrl}` };
       }
     }
     const main = `<section class="sec"><h2 class="sec-label">Compose</h2><div class="sec-body"><form class="form" method="post" action="/admin/announce">

@@ -1,14 +1,14 @@
 # Builds the static site from the public CONTENT repository, publishes it to GitHub Pages (the public
-# site, affluxseminar.org — GitHub Pages is reachable from Russia, where Cloudflare-proxied sites are
+# site, eeeseminar.org — GitHub Pages is reachable from Russia, where Cloudflare-proxied sites are
 # throttled) and deploys the application server from THIS repository (the admin,
-# admin.affluxseminar.org, a Cloudflare Worker). The content repository holds no credential and
+# admin.eeeseminar.org, a Cloudflare Worker). The content repository holds no credential and
 # cannot reach this one: this workflow polls it every 10 minutes and deploys when the live site's
 # content-version differs from the repository's latest commit, or on a push here, or on demand.
 # The live site itself is the record of what is deployed — not a cache.
 #
 # Repository secrets: CLOUDFLARE_API_TOKEN (Workers Scripts, Workers Routes, DNS, this account and zone), CLOUDFLARE_ACCOUNT_ID.
-# Repository variables: CONTENT_REPO (affluxseminar/afflux-content), SITE_URL (https://affluxseminar.org).
-# GitHub Pages: Settings → Pages → Source "GitHub Actions", custom domain affluxseminar.org, HTTPS enforced.
+# Repository variables: CONTENT_REPO (affluxseminar/afflux-content). The site's address is baseUrl in data/site.json.
+# GitHub Pages: Settings → Pages → Source "GitHub Actions", custom domain eeeseminar.org, HTTPS enforced.
 # The "production" environment is configured with a deployment-branch rule for main; the YAML only
 # names it. A passkey on the owner's account is what makes "owner only" true.
 name: Build, test and deploy
@@ -41,9 +41,12 @@ jobs:
           sha=$(git ls-remote "https://github.com/${{ vars.CONTENT_REPO }}.git" refs/heads/main | cut -f1)
           echo "$sha" | grep -Eq '^[0-9a-f]{40}$' || { echo "could not read the content repository"; exit 1; }
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false, sparse-checkout: data/site.json, sparse-checkout-cone-mode: false }
       - id: cmp
         run: |
-          live=$(curl -sf --max-time 15 "${{ vars.SITE_URL }}/content-version.txt" | tr -d '[:space:]' || true)
+          site=$(node -p "require('./data/site.json').baseUrl")
+          live=$(curl -sfL --max-time 15 "$site/content-version.txt" | tr -d '[:space:]' || true)
           # A scheduled run deploys only when the live site answers with a different content version;
           # while the site is not up yet (or unreachable) the schedule does nothing — the first deploy
           # comes from a push or "Run workflow". Pushes and manual runs always build.
@@ -107,7 +110,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node build.mjs --content content --content-sha ${{ needs.content.outputs.sha }}
-      - run: echo "affluxseminar.org" > dist/CNAME
+      - run: node -p "new URL(require('./data/site.json').baseUrl).hostname" > dist/CNAME
       - uses: actions/configure-pages@v5
         with: { enablement: true }
       - uses: actions/upload-pages-artifact@v3
@@ -115,7 +118,7 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-  # The admin: the Worker on admin.affluxseminar.org.
+  # The admin: the Worker on admin.eeeseminar.org.
   deploy:
     needs: [content, test]
     if: needs.content.outputs.changed == 'true'

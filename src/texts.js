@@ -1,4 +1,4 @@
-/* AFFLUX — the site's editable texts.
+/* EEES — the site's editable texts.
    The texts a secretary may change without touching the code live in the content repository as
    data/site-texts.json, written by the admin's "Texts" page. The build merges that file over
    data/site.json (the defaults); only the fields listed here can be overridden, and every value
