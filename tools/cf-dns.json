@@ -1,0 +1,5 @@
+[
+  { "type": "A", "name": "service.eeeseminar.org", "content": "85.202.84.103", "note": "NotiSend: return path and link tracking" },
+  { "type": "TXT", "name": "service.eeeseminar.org", "content": "v=spf1 include:msndr.net ~all", "note": "NotiSend: SPF of the return path" },
+  { "type": "TXT", "name": "mdmail._domainkey.eeeseminar.org", "content": "v=DKIM1;k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0P9x5eSEiVrSjrISleq0edrJOSrxW1OAQtYYqQmnItQTAfmdmlQlkoy8SXeXXLi4Pk5lHR4a0vmEH5sQ7MpXipTYJKJI5mm0PNkIfYHcyCOXDoSGvLX7nlC3DxKV8mOtUlOYSzK8Ckg+pEhFsjUznyVkjIOg/VG++0ik2hcM4sQIDAQAB", "note": "NotiSend: DKIM signature for seminar@eeeseminar.org" }
+]
