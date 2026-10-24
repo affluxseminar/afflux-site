@@ -6,8 +6,14 @@
 #            Zone WAF Edit, Single Redirect Edit
 # Delete that token (Cloudflare → My Profile → API Tokens) and this secret once the setup is done;
 # routine deploys use the narrower CLOUDFLARE_API_TOKEN in build.yml. Every step is idempotent.
+# It also runs when tools/cf-setup.run changes on main: that file's first line is the list of steps
+# (for example "account,zone,ech,dns,email,ratelimit,access,pages", or "retire"); such runs neither
+# migrate nor deploy (build.yml deploys). This lets the steps of a move be run without the Actions tab.
 name: Cloudflare setup
 on:
+  push:
+    branches: [main]
+    paths: [tools/cf-setup.run]
   workflow_dispatch:
     inputs:
       steps:
@@ -47,7 +53,13 @@ jobs:
       - name: Configure Cloudflare (idempotent)
         env:
           CF_SETUP_TOKEN: ${{ secrets.CF_SETUP_TOKEN }}
-        run: node tools/cf-setup.mjs --mailbox "${{ inputs.mailbox }}" --steps "${{ inputs.steps }}"
+          STEPS_INPUT: ${{ inputs.steps }}
+          MAILBOX_INPUT: ${{ inputs.mailbox }}
+        run: |
+          steps="$STEPS_INPUT"; mailbox="${MAILBOX_INPUT:-afflux2026@gmail.com}"
+          if [ "${{ github.event_name }}" = "push" ]; then steps=$(head -n1 tools/cf-setup.run | tr -d '[:space:]'); fi
+          echo "steps: $steps"
+          node tools/cf-setup.mjs --mailbox "$mailbox" --steps "$steps"
       - name: Apply D1 migrations
         if: ${{ inputs.migrate }}
         env:

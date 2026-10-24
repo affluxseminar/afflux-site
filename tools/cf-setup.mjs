@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-/* One-off Cloudflare setup for AFFLUX, run by the "Cloudflare setup" workflow (or by hand).
+/* One-off Cloudflare setup for EEES, run by the "Cloudflare setup" workflow (or by hand).
    Every step is idempotent: run it again and it reports what already exists. Nothing here
    touches secrets: the six Worker secrets are entered in the dashboard by the owner.
 
    Usage: CF_SETUP_TOKEN=… node tools/cf-setup.mjs --mailbox you@example.org [--steps a,b,c] [--site DIR]
    Steps: account d1 subdomain zone ech dns email redirects ratelimit access pages summary   (default: all)
+          retire — only when named: the former domain (affluxseminar.org/.com) becomes a 301 to the new one
+          and the admin leaves admin.affluxseminar.org. Run it once GitHub Pages serves the new domain.
    Writes: cf-setup.out.json (ids for wrangler.toml) and patches server/wrangler.toml in place
    so that `wrangler d1 migrations apply` and `wrangler deploy` can run right after. */
 
@@ -17,11 +19,13 @@ const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] 
 const MAILBOX = opt('--mailbox', process.env.MAILBOX || '');
 const STEPS = opt('--steps', 'all').split(',').map((s) => s.trim()).filter(Boolean);
 const SITE = opt('--site', '.');
-const ORG = 'affluxseminar.org', COM = 'affluxseminar.com';
+const ORG = 'eeeseminar.org';                        // the seminar's domain since 24 Oct 2026 (EEES)
+const OLD_ORG = 'affluxseminar.org', OLD_COM = 'affluxseminar.com';   // the former name: permanent 301s to ORG
 const SEMINAR = `seminar@${ORG}`;
-const TEAM = 'affluxseminar';                       // → affluxseminar.cloudflareaccess.com
+const TEAM = 'affluxseminar';                       // Access team (→ affluxseminar.cloudflareaccess.com) and GitHub owner (affluxseminar.github.io); not shown to visitors
 const ADMIN = `admin.${ORG}`;                        // the Worker (programme editor) lives here; the public site is on GitHub Pages
-const want = (s) => STEPS.includes('all') || STEPS.includes(s);
+const OLD_ADMIN = `admin.${OLD_ORG}`;
+const want = (s) => STEPS.includes(s) || (STEPS.includes('all') && s !== 'retire');
 const out = existsSync('cf-setup.out.json') ? JSON.parse(readFileSync('cf-setup.out.json', 'utf8')) : {};
 const save = () => writeFileSync('cf-setup.out.json', JSON.stringify(out, null, 2) + '\n');
 const log = (...a) => console.log(...a);
@@ -60,10 +64,10 @@ async function account() {
   if (accounts.length > 1) warn(`${accounts.length} accounts visible; using the first: ${accounts[0].name}`);
   out.account_id = accounts[0].id; out.account_name = accounts[0].name;
   log(`account: ${accounts[0].name} (${accounts[0].id})`);
-  for (const name of [ORG, COM]) {
+  for (const [key, name] of [['zone_org', ORG], ['zone_old_org', OLD_ORG], ['zone_old_com', OLD_COM]]) {
     const z = await cf('GET', `/zones?name=${name}`);
     if (!z.length) { warn(`zone ${name} is not in this account`); continue; }
-    out[name === ORG ? 'zone_org' : 'zone_com'] = z[0].id;
+    out[key] = z[0].id;
     log(`zone ${name}: ${z[0].id} status=${z[0].status} plan=${z[0].plan && z[0].plan.name}`);
   }
   save();
@@ -106,7 +110,7 @@ async function subdomain() {
 /* ---------- zone settings ---------- */
 async function zone() {
   const settings = { ssl: 'strict', always_use_https: 'on', min_tls_version: '1.2', tls_1_3: 'on', automatic_https_rewrites: 'on', opportunistic_encryption: 'on' };
-  for (const key of ['zone_org', 'zone_com']) {
+  for (const key of ['zone_org', 'zone_old_org', 'zone_old_com']) {
     if (!out[key]) continue;
     for (const [id, value] of Object.entries(settings)) {
       try { const r = await cf('PATCH', `/zones/${out[key]}/settings/${id}`, { value }); log(`${key} ${id}: ${r.value}`); }
@@ -117,7 +121,7 @@ async function zone() {
 
 /* ---------- reachability from Russia: no ECH (TSPU drops TLS handshakes that carry it) ---------- */
 async function ech() {
-  for (const key of ['zone_org', 'zone_com']) {
+  for (const key of ['zone_org', 'zone_old_org', 'zone_old_com']) {
     if (!out[key]) continue;
     try { const r = await cf('PATCH', `/zones/${out[key]}/settings/ech`, { value: 'off' }); log(`${key} ech: ${r.value}`); }
     catch (e) { warn(`${key} ech: ${e.message}`); }
@@ -146,16 +150,6 @@ async function dns() {
     await dnsUpsert(out.zone_org, 'TXT', `_dmarc.${ORG}`, `v=DMARC1; p=none; rua=mailto:${SEMINAR}; adkim=r; aspf=r`);
     await dnsUpsert(out.zone_org, 'CNAME', `www.${ORG}`, `${TEAM}.github.io`, { proxied: false });   // GitHub Pages redirects www to the apex
   }
-  if (out.zone_com) {
-    await dnsUpsert(out.zone_com, 'TXT', COM, 'v=spf1 -all');
-    await dnsUpsert(out.zone_com, 'TXT', `_dmarc.${COM}`, `v=DMARC1; p=reject; rua=mailto:${SEMINAR}`);
-    await dnsUpsert(out.zone_com, 'A', COM, '192.0.2.1', { proxied: true });
-    await dnsUpsert(out.zone_com, 'AAAA', COM, '100::', { proxied: true });
-    await dnsUpsert(out.zone_com, 'A', `www.${COM}`, '192.0.2.1', { proxied: true });
-    await dnsUpsert(out.zone_com, 'AAAA', `www.${COM}`, '100::', { proxied: true });
-    const mx = await cf('GET', `/zones/${out.zone_com}/dns_records?type=MX&per_page=100`);
-    if (mx.length) warn(`${COM} has ${mx.length} MX record(s); the .com should receive no mail`);
-  }
 }
 
 /* ---------- Email Routing: seminar@ → the mailbox ---------- */
@@ -179,16 +173,16 @@ async function email() {
   await dnsUpsert(out.zone_org, 'TXT', ORG, 'v=spf1 include:_spf.mx.cloudflare.net include:spf.smtp2go.com ~all');
 }
 
-/* ---------- redirects: .com and www → https://affluxseminar.org ---------- */
+/* ---------- redirects: www and the former .com → https://eeeseminar.org ---------- */
+const redirectRule = (expression, description, host = ORG) => ({ action: 'redirect', description, enabled: true, expression,
+  action_parameters: { from_value: { status_code: 301, target_url: { expression: `concat("https://${host}", http.request.uri.path)` }, preserve_query_string: true } } });
+async function putRedirects(zoneId, rules, label) {
+  try { await cf('PUT', `/zones/${zoneId}/rulesets/phases/http_request_dynamic_redirect/entrypoint`, { rules }); log(`redirect ${label}: set`); }
+  catch (e) { warn(`redirect ${label}: ${e.message}${forbidden(e) ? '  (token needs Zone → Single Redirect → Edit)' : ''}`); process.exitCode = 1; }
+}
 async function redirects() {
-  const target = { expression: `concat("https://${ORG}", http.request.uri.path)` };
-  const rule = (expression, description) => ({ action: 'redirect', description, enabled: true, expression, action_parameters: { from_value: { status_code: 301, target_url: target, preserve_query_string: true } } });
-  const put = async (zoneId, rules, label) => {
-    try { await cf('PUT', `/zones/${zoneId}/rulesets/phases/http_request_dynamic_redirect/entrypoint`, { rules }); log(`redirect ${label}: set`); }
-    catch (e) { warn(`redirect ${label}: ${e.message}${forbidden(e) ? '  (token needs Zone → Single Redirect → Edit)' : ''}`); }
-  };
-  if (out.zone_org) await put(out.zone_org, [rule(`(http.host eq "www.${ORG}")`, 'www → apex')], 'www.' + ORG);
-  if (out.zone_com) await put(out.zone_com, [rule('true', '.com → .org')], COM);
+  if (out.zone_org) await putRedirects(out.zone_org, [redirectRule(`(http.host eq "www.${ORG}")`, 'www → apex')], 'www.' + ORG);
+  if (out.zone_old_com) await putRedirects(out.zone_old_com, [redirectRule('true', `${OLD_COM} → ${ORG}`)], OLD_COM);
 }
 
 /* ---------- rate limiting on the dynamic paths (one rule, free plan) ---------- */
@@ -196,7 +190,7 @@ async function ratelimit() {
   if (!out.zone_org) return;
   const paths = ['/api/', '/ru/api/', '/admin', '/ru/admin', '/register', '/ru/register', '/signin', '/ru/signin'];
   const expression = '(' + paths.map((p) => `starts_with(http.request.uri.path, "${p}")`).join(' or ') + ')';
-  const rules = [{ action: 'block', description: 'AFFLUX: 40 requests per 10 s per IP on the dynamic paths', enabled: true, expression,
+  const rules = [{ action: 'block', description: 'EEES: 40 requests per 10 s per IP on the dynamic paths', enabled: true, expression,
     ratelimit: { characteristics: ['ip.src', 'cf.colo.id'], period: 10, requests_per_period: 40, mitigation_timeout: 10 } }];
   try { await cf('PUT', `/zones/${out.zone_org}/rulesets/phases/http_ratelimit/entrypoint`, { rules }); log('rate limit: set (40 / 10 s per IP on api, admin, register, signin)'); }
   catch (e) { warn(`rate limit: ${e.message}${forbidden(e) ? '  (token needs Zone → Zone WAF → Edit)' : ''}`); }
@@ -209,7 +203,7 @@ async function access() {
   let org = null;
   try { org = await cf('GET', `/accounts/${acc}/access/organizations`, undefined, { ok404: true }); } catch (e) { if (!forbidden(e)) throw e; warn(`access organization: cannot read (${e.message})`); }
   if (!org || !org.auth_domain) {
-    try { org = await cf('POST', `/accounts/${acc}/access/organizations`, { name: 'AFFLUX', auth_domain: `${TEAM}.cloudflareaccess.com`, is_ui_read_only: false }); log(`access organization: created ${org.auth_domain}`); }
+    try { org = await cf('POST', `/accounts/${acc}/access/organizations`, { name: 'EEES', auth_domain: `${TEAM}.cloudflareaccess.com`, is_ui_read_only: false }); log(`access organization: created ${org.auth_domain}`); }
     catch (e) { warn(`access organization: ${e.message}`); warn('→ create it once in the dashboard: Zero Trust → choose a team name (affluxseminar) → Free plan; then re-run step "access"'); return; }
   } else log(`access organization: ${org.auth_domain}`);
   out.access_team_domain = org.auth_domain; save();
@@ -218,11 +212,13 @@ async function access() {
   if (!otp) { otp = await cf('POST', `/accounts/${acc}/access/identity_providers`, { name: 'One-time PIN', type: 'onetimepin', config: {} }); log('access idp: one-time PIN created'); }
   else log('access idp: one-time PIN exists');
   const apps = await cf('GET', `/accounts/${acc}/access/apps?per_page=100`);
-  let app = apps.find((a) => a.name === 'AFFLUX admin');
-  const body = { name: 'AFFLUX admin', type: 'self_hosted', domain: `${ADMIN}/admin`, self_hosted_domains: [`${ADMIN}/admin`, `${ADMIN}/ru/admin`],
+  let app = apps.find((a) => a.name === 'EEES admin') || apps.find((a) => a.name === 'AFFLUX admin');
+  /* While the former admin host still serves the Worker (until step "retire"), Access guards both. */
+  const hosts = want('retire') || !out.zone_old_org ? [ADMIN] : [ADMIN, OLD_ADMIN];
+  const body = { name: 'EEES admin', type: 'self_hosted', domain: `${ADMIN}/admin`, self_hosted_domains: hosts.flatMap((h) => [`${h}/admin`, `${h}/ru/admin`]),
     session_duration: '24h', allowed_idps: [otp.id], auto_redirect_to_identity: true, app_launcher_visible: false, http_only_cookie_attribute: true, same_site_cookie_attribute: 'lax', enable_binding_cookie: true, skip_interstitial: true };
   if (!app) { app = await cf('POST', `/accounts/${acc}/access/apps`, body); log(`access app: created (aud ${app.aud})`); }
-  else { app = await cf('PUT', `/accounts/${acc}/access/apps/${app.id}`, body); log(`access app: exists, settings refreshed (aud ${app.aud})`); }
+  else { app = await cf('PUT', `/accounts/${acc}/access/apps/${app.id}`, body); log(`access app: exists, settings refreshed for ${hosts.join(', ')} (aud ${app.aud})`); }
   out.access_aud = app.aud; save();
   const pols = await cf('GET', `/accounts/${acc}/access/apps/${app.id}/policies`);
   const pbody = { name: 'Owner', decision: 'allow', precedence: 1, include: [{ email: { email: MAILBOX } }] };
@@ -259,6 +255,38 @@ async function pages() {
   log(`GitHub Pages: in the repository Settings → Pages set the custom domain ${ORG} and tick "Enforce HTTPS" once the certificate is issued`);
 }
 
+/* ---------- retire: the former domain becomes a permanent redirect ----------
+   affluxseminar.org leaves GitHub Pages (whose custom domain is now eeeseminar.org) and is answered by
+   Cloudflare with a 301 to the same path on eeeseminar.org; admin.affluxseminar.org → admin.eeeseminar.org.
+   A 301 is small enough to pass the Russian throttling of Cloudflare-proxied hosts (as the .com did).
+   Mail to seminar@affluxseminar.org keeps arriving: the MX records and the routing rule stay. */
+async function retire() {
+  if (!out.zone_old_org) { warn(`zone ${OLD_ORG} is not in this account; nothing to retire`); return; }
+  const z = out.zone_old_org;
+  /* the admin moves only once the Worker already answers on the new host */
+  const doms = await cf('GET', `/accounts/${out.account_id}/workers/domains?per_page=100`);
+  const onNew = doms.some((d) => d.hostname === ADMIN);
+  for (const d of doms.filter((x) => x.hostname === OLD_ADMIN || x.hostname === OLD_ORG)) {
+    if (!onNew) { warn(`worker custom domain ${d.hostname}: kept (the Worker is not on ${ADMIN} yet; deploy first, then re-run "retire")`); continue; }
+    await cf('DELETE', `/accounts/${out.account_id}/workers/domains/${d.id}`); log(`worker custom domain ${d.hostname}: removed`);
+  }
+  const hosts = [OLD_ORG, `www.${OLD_ORG}`].concat(onNew ? [OLD_ADMIN] : []);
+  for (const host of hosts) {
+    const recs = await cf('GET', `/zones/${z}/dns_records?name=${host}&per_page=100`);
+    for (const r of recs.filter((x) => ['A', 'AAAA', 'CNAME'].includes(x.type) && !((x.content === '192.0.2.1' || x.content === '100::') && x.proxied))) {
+      await cf('DELETE', `/zones/${z}/dns_records/${r.id}`); log(`dns ${host} ${r.type} ${r.content}: removed`);
+    }
+    await dnsUpsert(z, 'A', host, '192.0.2.1', { proxied: true });
+    await dnsUpsert(z, 'AAAA', host, '100::', { proxied: true });
+  }
+  await putRedirects(z, [
+    redirectRule(`(http.host eq "${OLD_ADMIN}")`, `${OLD_ADMIN} → ${ADMIN}`, ADMIN),
+    redirectRule('true', `${OLD_ORG} → ${ORG}`)
+  ], OLD_ORG);
+  if (out.zone_old_com) await putRedirects(out.zone_old_com, [redirectRule('true', `${OLD_COM} → ${ORG}`)], OLD_COM);
+  if (onNew && MAILBOX) await access();
+}
+
 /* ---------- summary ---------- */
 function summary() {
   log('\n================ SUMMARY (commit the wrangler.toml values; nothing here is secret) ================');
@@ -270,10 +298,10 @@ function summary() {
   log('=====================================================================================================');
 }
 
-const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access, pages };
+const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access, pages, retire };
 (async () => {
   if (!out.account_id || want('account')) await account();
-  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access', 'pages']) {
+  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access', 'pages', 'retire']) {
     if (!want(step)) continue;
     log(`\n--- ${step} ---`);
     try { await run[step](); } catch (e) { warn(`${step} failed: ${e.message}`); process.exitCode = 1; }
