@@ -129,11 +129,12 @@ async def main():
         fade = '.fig{-webkit-mask-image:linear-gradient(to right,transparent 30%,#000 62%);mask-image:linear-gradient(to right,transparent 30%,#000 62%)}'
         await shoot(pw, page(1200, 630, body, fade), 1200, 630, ROOT / 'assets/og-default.png')
 
-        # YouTube banner: everything that matters inside the 1546 x 423 safe area in the middle
-        body = (f'<div class="fig">{field(2560, 1440, (1990, 720), 3.4)}</div>'
-                + mark_html(507, 520, 1000, 190, 28)
-                + '<div class="rule" style="left:507px;top:800px;width:1000px"></div>'
-                + f'<div class="sub" style="left:507px;top:826px;font-size:40px;line-height:1.4">{sub_en}<div class="b">{sub_ru}</div></div>')
+        # YouTube banner: 2560 x 1440, of which phones show only the middle 1546 x 423 (x 507-2053,
+        # y 508-931). Everything that matters sits inside it with a margin; the sink is inside it too.
+        body = (f'<div class="fig">{field(2560, 1440, (1800, 712), 3.4)}</div>'
+                + mark_html(597, 548, 800, 150, 25)
+                + '<div class="rule" style="left:597px;top:762px;width:800px"></div>'
+                + f'<div class="sub" style="left:597px;top:782px;font-size:32px;line-height:1.4">{sub_en}<div class="b">{sub_ru}</div></div>')
         await shoot(pw, page(2560, 1440, body, ':root{--dot:9px}'), 2560, 1440, ROOT / 'assets/youtube-banner.png')
 
         # YouTube avatar (shown in a circle) and the video watermark
