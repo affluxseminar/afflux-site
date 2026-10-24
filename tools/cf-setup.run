@@ -1,3 +1,4 @@
 retire
 # The steps the "Cloudflare setup" workflow runs when this file changes on main (first line only).
 # 24 Oct 2026: the new domain eeeseminar.org; "retire" follows once GitHub Pages serves it.
+# 2026-10-24T08:18:59Z re-run: Access sign-in page name
