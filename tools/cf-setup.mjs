@@ -5,6 +5,8 @@
 
    Usage: CF_SETUP_TOKEN=… node tools/cf-setup.mjs --mailbox you@example.org [--steps a,b,c] [--site DIR]
    Steps: account d1 subdomain zone ech dns email redirects ratelimit access pages summary   (default: all)
+          records — only when named: the DNS records listed in tools/cf-dns.json (for example a mail
+          service's DKIM and SPF), created or updated in the zone their name belongs to.
           retire — only when named: the former domain (affluxseminar.org/.com) becomes a 301 to the new one
           and the admin leaves admin.affluxseminar.org. Run it once GitHub Pages serves the new domain.
    Writes: cf-setup.out.json (ids for wrangler.toml) and patches server/wrangler.toml in place
@@ -25,7 +27,7 @@ const SEMINAR = `seminar@${ORG}`;
 const TEAM = 'affluxseminar';                       // Access team (→ affluxseminar.cloudflareaccess.com) and GitHub owner (affluxseminar.github.io); not shown to visitors
 const ADMIN = `admin.${ORG}`;                        // the Worker (programme editor) lives here; the public site is on GitHub Pages
 const OLD_ADMIN = `admin.${OLD_ORG}`;
-const want = (s) => STEPS.includes(s) || (STEPS.includes('all') && s !== 'retire');
+const want = (s) => STEPS.includes(s) || (STEPS.includes('all') && s !== 'retire' && s !== 'records');
 const out = existsSync('cf-setup.out.json') ? JSON.parse(readFileSync('cf-setup.out.json', 'utf8')) : {};
 const save = () => writeFileSync('cf-setup.out.json', JSON.stringify(out, null, 2) + '\n');
 const log = (...a) => console.log(...a);
@@ -292,6 +294,25 @@ async function retire() {
   if (onNew && MAILBOX) await access();
 }
 
+/* ---------- records: extra DNS records kept in tools/cf-dns.json ----------
+   [{ "type": "TXT", "name": "eeeseminar.org", "content": "v=spf1 …" }, { "type": "CNAME", "name": "…", "content": "…" }]
+   One SPF record per name: a TXT starting with v=spf1 replaces the existing one. Records are never
+   proxied (mail and verification records must not be). Nothing is deleted here. */
+async function records() {
+  const file = `${SITE}/tools/cf-dns.json`;
+  if (!existsSync(file)) { warn('tools/cf-dns.json not found'); return; }
+  const list = JSON.parse(readFileSync(file, 'utf8'));
+  const zones = [[ORG, out.zone_org], [OLD_ORG, out.zone_old_org], [OLD_COM, out.zone_old_com]];
+  for (const r of list) {
+    const name = String(r.name).replace(/\.$/, '').toLowerCase();
+    const z = zones.find(([d]) => name === d || name.endsWith('.' + d));
+    if (!z || !z[1]) { warn(`dns ${name}: no zone in this account`); process.exitCode = 1; continue; }
+    const type = String(r.type).toUpperCase();
+    try { await dnsUpsert(z[1], type, name, String(r.content), ['A', 'AAAA', 'CNAME'].includes(type) ? { proxied: false } : {}); }
+    catch (e) { warn(`dns ${name} ${type}: ${e.message}`); process.exitCode = 1; }
+  }
+}
+
 /* ---------- summary ---------- */
 function summary() {
   log('\n================ SUMMARY (commit the wrangler.toml values; nothing here is secret) ================');
@@ -303,10 +324,10 @@ function summary() {
   log('=====================================================================================================');
 }
 
-const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access, pages, retire };
+const run = { account, d1, subdomain, zone, ech, dns, email, redirects, ratelimit, access, pages, retire, records };
 (async () => {
   if (!out.account_id || want('account')) await account();
-  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access', 'pages', 'retire']) {
+  for (const step of ['d1', 'subdomain', 'zone', 'ech', 'dns', 'email', 'redirects', 'ratelimit', 'access', 'pages', 'retire', 'records']) {
     if (!want(step)) continue;
     log(`\n--- ${step} ---`);
     try { await run[step](); } catch (e) { warn(`${step} failed: ${e.message}`); process.exitCode = 1; }
