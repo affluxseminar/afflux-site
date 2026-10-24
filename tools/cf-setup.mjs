@@ -206,6 +206,11 @@ async function access() {
     try { org = await cf('POST', `/accounts/${acc}/access/organizations`, { name: 'EEES', auth_domain: `${TEAM}.cloudflareaccess.com`, is_ui_read_only: false }); log(`access organization: created ${org.auth_domain}`); }
     catch (e) { warn(`access organization: ${e.message}`); warn('→ create it once in the dashboard: Zero Trust → choose a team name (affluxseminar) → Free plan; then re-run step "access"'); return; }
   } else log(`access organization: ${org.auth_domain}`);
+  /* the name shown above the admin's sign-in form */
+  if (org.name !== 'EEES') {
+    try { await cf('PUT', `/accounts/${acc}/access/organizations`, { name: 'EEES', auth_domain: org.auth_domain }); log('access organization: renamed to EEES'); }
+    catch (e) { warn(`access organization name: ${e.message}${forbidden(e) ? '  (token needs Access: Organizations, Identity Providers, and Groups → Edit)' : ''}`); }
+  }
   out.access_team_domain = org.auth_domain; save();
   const idps = await cf('GET', `/accounts/${acc}/access/identity_providers?per_page=50`);
   let otp = idps.find((i) => i.type === 'onetimepin');
