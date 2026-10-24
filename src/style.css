@@ -1,10 +1,10 @@
 /* EEES — visual system
-   Type:    Old Standard TT (wordmark, titles, dates, the figure caption) + Golos Text (everything else), self-hosted
+   Type:    Old Standard TT (wordmark, titles, dates) + Golos Text (everything else), self-hosted
    Colour:  three appearances — Deep (midnight, default), Dark (navy), Light (low-glare stone) —
             with one spectral cyan-green accent, used sparingly
    Grid:    12 columns; sections = marginal label (2/12) + body (10/12)
    Motif:   the wordmark justified across the measure, each letter glossed by its word
-            (Economics, Energy, Environment, Seminar); one figure (streamlines of a point sink) */
+            (Economics, Energy, Environment, Seminar). No illustration: type, rules and space. */
 
 @font-face {
   font-family: 'Old Standard TT';
@@ -328,12 +328,7 @@ main .sec:last-child { padding-bottom: calc(var(--space) * 1.2); }
 
 /* ---------- next seminar ---------- */
 
-.next-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
-  column-gap: var(--gutter);
-  align-items: start;
-}
+.next-grid { max-width: 46rem; }
 .when { font-size: var(--fs-1); color: var(--text-2); display: flex; flex-direction: column; gap: 0.15rem; }
 .when time { font: 400 var(--fs-3)/1.3 var(--serif); color: var(--text); white-space: normal; }
 .when-big time { font-size: var(--fs-4); }
@@ -394,33 +389,8 @@ main .sec:last-child { padding-bottom: calc(var(--space) * 1.2); }
 .note { font-size: var(--fs-0); color: var(--text-2); line-height: 1.5; }
 .note-wide { margin-top: 1.5rem; max-width: 60ch; font-size: var(--fs-1); text-wrap: pretty; }
 
-/* the one figure (figure.field; the form's div.field is unrelated) */
-figure.field { color: var(--field); position: relative; }
-.field svg { width: 100%; height: auto; display: block; }
-.field canvas.field-live { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 600 / 480; height: auto; pointer-events: none; }
-.field svg path { fill: none; stroke: currentColor; stroke-width: 0.5; opacity: 0.5; vector-effect: non-scaling-stroke; stroke-linecap: round; }
-.field svg path.lum { stroke: var(--accent); opacity: 0.55; stroke-width: 0.6; }
-.field svg circle { fill: var(--accent); }
-.field figcaption { margin-top: 0.85rem; font: 400 0.9rem/1.5 var(--serif); color: var(--text-2); max-width: 46ch; text-wrap: pretty; }
-.field figcaption::before { content: 'Fig. 1.'; margin-right: 0.45em; color: var(--text); }
-:lang(ru) .field figcaption::before { content: 'Рис. 1.'; }
-.field figcaption i { font-style: italic; }
-
-@media (prefers-reduced-motion: no-preference) {
-  .field svg path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.4s cubic-bezier(.4,0,.2,1) forwards; }
-  .field svg path:nth-child(3n) { animation-duration: 1.7s; }
-  .field svg path:nth-child(3n+1) { animation-delay: 120ms; }
-  @keyframes draw { to { stroke-dashoffset: 0; } }
-}
-
-@media (max-width: 64rem) {
-  .next-grid { grid-template-columns: 1fr; row-gap: 2.5rem; }
-  figure.field { max-width: 28rem; }
-}
 @media (max-width: 47.99rem) {
   .next-title { max-width: none; }
-  figure.field { max-width: 24rem; }
-  .field figcaption { font-size: 0.9375rem; }
 }
 
 /* ---------- ledgers ---------- */
@@ -534,8 +504,7 @@ h1, h2, .prose, .synopsis, .lede, .who, .row-who, .row-title { hyphens: manual; 
 /* ---------- forms (account pages, rendered by the server) ---------- */
 
 .form-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 4fr); column-gap: var(--gutter); align-items: start; }
-.form-grid > figure.field { margin-top: 0.4rem; }
-@media (max-width: 64rem) { .form-grid { grid-template-columns: 1fr; } .form-grid > figure.field { max-width: 24rem; margin-top: 2.5rem; } }
+@media (max-width: 64rem) { .form-grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: no-preference) {
   .rise { animation: rise 520ms cubic-bezier(.2,.7,.2,1) both; }
   .rise-2 { animation-delay: 160ms; }
@@ -619,7 +588,7 @@ h1, h2, .prose, .synopsis, .lede, .who, .row-who, .row-title { hyphens: manual; 
 
 @media print {
   :root { --bg: #fff; --text: #000; --text-prose: #111; --text-2: #444; --rule: #bbb; --rule-strong: #000; }
-  .site-head, .site-foot, figure.field, .actions, .skip, .theme { display: none; }
+  .site-head, .site-foot, .actions, .skip, .theme { display: none; }
   body { font-size: 11pt; }
   a { color: inherit; text-decoration: none; }
 }

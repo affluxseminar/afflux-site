@@ -335,10 +335,6 @@
   <h2 class="sec-label">${esc(s.nextSeminar)}</h2>
   <div class="sec-body next-grid">
     ${nextHtml}
-    <figure class="field" aria-hidden="true"${ctx.fieldAttrs || ''}>
-      ${ctx.fieldSvg || ''}
-      <figcaption>${s.fieldCaptionHtml || esc(s.fieldCaption)}</figcaption>
-    </figure>
   </div>
 </section>
 ${following.length ? `

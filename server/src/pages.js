@@ -2,11 +2,8 @@
 import '../../src/render.js';
 import siteJson from '../../data/site.json';
 import { THEME_INIT, cspPolicy } from '../../src/shared.js';
-import { FIELD, streamlineSvg, fieldAttrs } from '../../src/field.js';
-
-const FIELD_SVG = streamlineSvg(FIELD);
-// The caption is site-authored markup (data/site.json), not visitor input: it carries the formula's italics.
-const figure = (lang, mode) => `<figure class="field" aria-hidden="true"${fieldAttrs(FIELD)} data-mode="${mode}">${FIELD_SVG}<figcaption>${mode === 'source' ? (t(lang).fieldCaptionSourceHtml || esc(t(lang).fieldCaptionSource)) : (t(lang).fieldCaptionHtml || esc(t(lang).fieldCaption))}</figcaption></figure>`;
+// The account pages once carried the site's figure beside their forms; the site has no figure now.
+const figure = () => '';
 
 const R = globalThis.AFFLUX;
 export const site = R.typoSite(siteJson);
@@ -42,7 +39,6 @@ export function shell({ lang, kind, path, title, description, main }) {
 <link rel="preload" href="/assets/fonts/GolosText-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/style.css">
 <script src="/assets/client.js" defer></script>
-<script src="/assets/field-live.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">${esc(s.skip)}</a>

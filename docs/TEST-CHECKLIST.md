@@ -85,4 +85,3 @@ without VPN; where it says "from abroad", any non-Russian network or a foreign S
 - [ ] EN and RU switch keeps you on the same page.
 - [ ] Three appearances switch instantly and persist after reload.
 - [ ] A talk with `join: true` shows Join until the session ends and Recording afterwards.
-- [ ] "Fig. 1" is still (no animation) when the system's "reduce motion" is on.

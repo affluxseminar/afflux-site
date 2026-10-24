@@ -1,6 +1,6 @@
 /* The EEES field: streamlines of a point sink with circulation and a weak uniform flow.
-   Shared by the static build (Fig. 1 as SVG), the application server (same figure on the
-   account pages) and, through the parameters it exports, the live version in field-live.js. */
+   No longer on the site (removed 24 Oct 2026); tools/brand-images.py draws it behind the
+   OpenGraph card and the YouTube channel's pictures. */
 
 export const FIELD = { w: 600, h: 480, sink: [402, 226], k: 6200, u0: 7, gamma: 2600 };
 

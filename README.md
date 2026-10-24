@@ -107,7 +107,7 @@ side) and saved to the content repository as `data/site-texts.json`. The build c
 (`src/texts.js`: only the listed fields, length limits, paragraphs and credential lines as plain
 strings) and merges it over the defaults in `data/site.json`; an empty field means the default.
 A broken file stops the build, so the live site never shows half a change. Everything else in
-`data/site.json` — button labels, error texts, the figure caption — is changed in this repository.
+`data/site.json` — button labels, error texts — is changed in this repository.
 
 ## Two repositories
 
@@ -144,7 +144,7 @@ by an opaque id. Details and setup: `server/README.md`.
 Three appearances, all built from the same tokens at the top of `src/style.css`:
 
 - **Deep** (default) — midnight blue-black, muted text, a spectral cyan-green accent used only for
-  links, focus, the accented streamlines and hover.
+  links, focus and hover.
 - **Dark** — a comfortable navy.
 - **Light** — low-glare stone, no white; the accent becomes a deep teal for contrast.
 
@@ -213,8 +213,8 @@ Plus `sitemap.xml` with hreflang pairs, `robots.txt`, `404.html` and `ru/404.htm
   hairlines, not cards. Left-aligned throughout.
 - **Identity.** The wordmark EEES is set justified across the full measure, so the four letters are
   the grid; under each, in italic, the word it stands for (Economics, Energy, Environment, Seminar).
-  The only illustration is Fig. 1: streamlines of a point sink (a flowing towards), computed from a small vector field in `src/field.js`, shared by the build, the server pages and
-  the live version; every fourth trajectory carries the accent.
+  The site has no illustration (the streamline figure was removed on 24 Oct 2026); the field in
+  `src/field.js` survives only behind the OpenGraph card and the YouTube pictures.
 - **Accessibility.** Landmarks, skip link, visible focus in every appearance, `aria-current` on
   navigation, native radio buttons behind the appearance control, `lang` on fallback text, form
   labels, print styles.

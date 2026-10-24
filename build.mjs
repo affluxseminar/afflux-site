@@ -18,7 +18,6 @@ import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { THEME_INIT, THEME_INIT_HASH, cspPolicy, SECURITY_HEADERS } from './src/shared.js';
-import { FIELD, streamlineSvg, fieldAttrs } from './src/field.js';
 import { validateTexts, applyTexts } from './src/texts.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -135,10 +134,6 @@ if (errors.length) {
   process.exit(1);
 }
 
-/* ---------- the figure (src/field.js) ---------- */
-const fieldSvg = streamlineSvg(FIELD);
-const fieldLiveJs = readFileSync(join(HERE, 'src/field-live.js'), 'utf8');
-
 /* ---------- security: CSP with a hash for the one inline script ---------- */
 
 const themeHash = 'sha256-' + createHash('sha256').update(THEME_INIT, 'utf8').digest('base64');
@@ -150,7 +145,7 @@ const CSP_HEADER = cspPolicy({ header: true });
 
 const urlFor = (lang, path) => (lang === 'ru' ? '/ru' + path : path);
 const absUrl = (p) => site.baseUrl.replace(/\/$/, '') + p;
-const ctxBase = { site, fieldSvg, fieldAttrs: fieldAttrs(FIELD), url: urlFor };
+const ctxBase = { site, url: urlFor };
 const model = R.prepare(site, talks, NOW);
 
 function jsonLd(page) {
@@ -219,7 +214,7 @@ ${preview ? '' : `<link rel="canonical" href="${canonical}">
 <meta property="og:locale" content="${lang === 'ru' ? 'ru_RU' : 'en_GB'}">
 <meta property="og:locale:alternate" content="${lang === 'ru' ? 'en_GB' : 'ru_RU'}">
 <meta name="twitter:card" content="summary_large_image">
-${preview ? `<style>\n${fontFaceInline()}\n</style>` : `<link rel="stylesheet" href="/assets/style.css?v=${assetVersion(css)}">\n<script src="/assets/client.js?v=${assetVersion(clientJs)}" defer></script>\n<script src="/assets/field-live.js?v=${assetVersion(fieldLiveJs)}" defer></script>`}
+${preview ? `<style>\n${fontFaceInline()}\n</style>` : `<link rel="stylesheet" href="/assets/style.css?v=${assetVersion(css)}">\n<script src="/assets/client.js?v=${assetVersion(clientJs)}" defer></script>`}
 ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/<\//g, '<\\/')}</script>` : ''}`;
 }
 
@@ -273,7 +268,6 @@ for (const lang of ['en', 'ru']) {
 // assets
 writeFileSync(join(OUT, 'assets/style.css'), css);
 writeFileSync(join(OUT, 'assets/client.js'), clientJs);
-writeFileSync(join(OUT, 'assets/field-live.js'), fieldLiveJs);
 for (const f of readdirSync(join(HERE, 'assets/fonts'))) if (/\.(woff2|txt)$/.test(f)) cpSync(join(HERE, 'assets/fonts', f), join(OUT, 'assets/fonts', f));
 for (const f of readdirSync(join(HERE, 'assets'))) if (/\.(png|jpe?g|svg|webp)$/i.test(f)) cpSync(join(HERE, 'assets', f), join(OUT, 'assets', f));
 if (existsSync(PHOTOS_DIR)) {
@@ -347,7 +341,7 @@ if (flag('--preview')) {
   const PREV = join(HERE, 'preview');
   mkdirSync(PREV, { recursive: true });
   const homePage = R.renderRoute({ kind: 'home', path: '/', lang: 'en' }, { ...ctxBase, url: (l, p) => '#' + urlFor(l, p) }, model);
-  const previewData = JSON.stringify({ site, talks, fieldSvg, fieldAttrs: fieldAttrs(FIELD) }).replace(/<\//g, '<\\/');
+  const previewData = JSON.stringify({ site, talks }).replace(/<\//g, '<\\/');
   const preview = `<!doctype html>
 <html lang="en" data-preview>
 <head>
@@ -363,16 +357,12 @@ ${renderSrc}
 <script>
 ${clientJs}
 </script>
-<script id="field-live-src" type="text/plain">
-${fieldLiveJs.replace(/<\//g, '<\\/')}
-</script>
 <script>
 (function () {
   var data = JSON.parse(document.getElementById('afflux-data').textContent);
   var R = window.AFFLUX, C = window.AFFLUX_CLIENT;
   var model = R.prepare(data.site, data.talks, new Date());
-  var ctx = { site: data.site, fieldSvg: data.fieldSvg, fieldAttrs: data.fieldAttrs, url: function (l, p) { return '#' + (l === 'ru' ? '/ru' + p : p); } };
-  var liveSrc = document.getElementById('field-live-src').textContent;
+  var ctx = { site: data.site, url: function (l, p) { return '#' + (l === 'ru' ? '/ru' + p : p); } };
   var lastPath = null;
   function route() {
     var raw = location.hash.replace(/^#/, '') || '/';
@@ -386,7 +376,6 @@ ${fieldLiveJs.replace(/<\//g, '<\\/')}
     app.innerHTML = page.header + '<main id="main" class="wrap" tabindex="-1">' + page.main + '</main>' + page.footer;
     C.init(app);
     C.headerState();
-    try { new Function(liveSrc)(); } catch (e) {}
     if (lastPath !== null && lastPath !== raw) { window.scrollTo(0, 0); var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true }); }
     lastPath = raw;
   }
