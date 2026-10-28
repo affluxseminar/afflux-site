@@ -350,7 +350,6 @@ main .sec:last-child { padding-bottom: calc(var(--space) * 1.2); }
 .next-title a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
 .who { margin-top: 1.1rem; display: flex; flex-direction: column; overflow-wrap: anywhere; }
 .who-name { font-weight: 600; }
-.who-deg, .row-deg { font-weight: 400; }   /* the degree and title follow the name on its line */
 .who-aff { color: var(--text-2); }
 .meta { margin-top: 0.5rem; color: var(--text-2); font-size: var(--fs-1); }
 .synopsis { margin-top: 1.25rem; max-width: 62ch; color: var(--text-prose); line-height: 1.6; text-wrap: pretty; }

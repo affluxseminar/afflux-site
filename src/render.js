@@ -226,18 +226,24 @@
 </p>`;
   }
 
-  // The speaker's degree and title follow the name, so that a reader of the announcement can judge
-  // the talk at once (the conveners' wish, 28 Oct 2026).
-  function degreeHtml(t, lang, cls) {
-    const dg = lf(t.degree, lang);
-    return dg.text ? `<span class="${cls}"${dg.lang ? ` lang="${dg.lang}"` : ''}>, ${esc(dg.text)}</span>` : '';
+  // Under the speaker's name: degrees, titles and position, one line each (the conveners' wish,
+  // 28 Oct 2026: a reader of the announcement judges the talk at once). When given, they take the
+  // place of the affiliation line, which they usually include; the full story is in "About the speaker".
+  function titleLines(t, lang) {
+    const tl = lf(t.titles, lang);
+    return { lines: String(tl.text || '').split('\n').map((x) => x.trim()).filter(Boolean), lang: tl.lang };
+  }
+  function underName(t, lang, cls) {
+    const tl = titleLines(t, lang);
+    if (tl.lines.length) return tl.lines.map((x) => `<span class="${cls}"${tl.lang ? ` lang="${tl.lang}"` : ''}>${esc(x)}</span>`).join('');
+    const af = lf(t.affiliation, lang);
+    return af.text ? `<span class="${cls}"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : '';
   }
   function speakerLine(t, ctx, tag) {
     const { lang } = ctx;
     const sp = lf(t.speaker, lang);
-    const af = lf(t.affiliation, lang);
     const T = tag || 'p';
-    return `<${T} class="who"><span class="who-line"><span class="who-name"${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${degreeHtml(t, lang, 'who-deg')}</span>${af.text ? `<span class="who-aff"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : ''}</${T}>`;
+    return `<${T} class="who"><span class="who-name"${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${underName(t, lang, 'who-aff')}</${T}>`;
   }
 
   function portrait(t, ctx) {
@@ -295,7 +301,7 @@
       }
       return `<li class="row">
   <time class="row-date" datetime="${t.start.toISOString()}">${esc(dateTxt)}</time>
-  <span class="row-who"><span><span${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${degreeHtml(t, lang, 'row-deg')}</span>${af.text ? `<span class="row-aff"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : ''}</span>
+  <span class="row-who"><span${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${underName(t, lang, 'row-aff')}</span>
   <a class="row-title" href="${ctx.url(lang, talkPath(t))}"${title.lang ? ` lang="${title.lang}"` : ''}>${esc(title.text)}</a>
   <span class="row-lang" title="${esc(s.talkIn[t.language] || '')}">${esc(s.langCode[t.language] || t.language)}</span>
   <span class="row-links">${links}</span>
@@ -572,9 +578,9 @@ ${sections || `<section class="sec">
         if (!talk) { title = `${s.notFound}, ${base}`; description = s.notFoundText; main = notFoundPage(c); route = Object.assign({}, route, { kind: '404' }); break; }
         const tt = L(talk.title, lang);
         const sp = L(talk.speaker, lang);
-        const dg = L(talk.degree, lang);
+        const dg = titleLines(talk, lang).lines.join('; ');
         title = `${tt}, ${sp}, ${base}`;
-        description = `${fmtLongDate(talk.start, lang, talk.timezone)}, ${fmtTime(talk.start, talk.timezone)}. ${sp}${dg ? ', ' + dg : ''}${talk.affiliation ? ', ' + L(talk.affiliation, lang) : ''}. ${s.talkIn[talk.language] || ''}.`;
+        description = `${fmtLongDate(talk.start, lang, talk.timezone)}, ${fmtTime(talk.start, talk.timezone)}. ${sp}${dg ? ', ' + dg : (talk.affiliation ? ', ' + L(talk.affiliation, lang) : '')}. ${s.talkIn[talk.language] || ''}.`;
         main = talkPage(c, talk);
         break;
       }

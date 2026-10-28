@@ -186,7 +186,8 @@ ${orphans.length ? `<section class="sec"><h2 class="sec-label">Stored without a 
         const start = new Date(`${talk.date}T${talk.time}:00`);
         const date = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: talk.timezone }).format(start).replace(/ г\.$/, '');
         const pageUrl = `${env.PUBLIC_SITE || env.SITE_BASE}${lang === 'ru' ? '/ru' : ''}/talks/${talk.slug}/`;
-        const whoT = L(talk.speaker) + (talk.degree && L(talk.degree) ? `, ${L(talk.degree)}` : '') + (talk.affiliation ? ` (${L(talk.affiliation)})` : '');
+        const tl = String(L(talk.titles) || '').split('\n').map((x) => x.trim()).filter(Boolean);
+        const whoT = L(talk.speaker) + (tl.length ? `\n${tl.join('\n')}` : (talk.affiliation ? ` (${L(talk.affiliation)})` : ''));
         const abs = String(L(talk.abstract)).split(/\n\s*\n/)[0];
         pre = lang === 'ru'
           ? { list: 'ru', subject: `EEES, ${date}: ${L(talk.title)}`, text: `Семинар «Экономика энергетики и окружающей среды» (EEES)\n${date}, ${talk.time} по московскому времени\n\n${whoT}\n${L(talk.title)}\n\n${abs}\n\nПодробности, подключение и ссылка на запись: ${pageUrl}` }

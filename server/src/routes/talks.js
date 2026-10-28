@@ -23,6 +23,8 @@ const translit = (s) => String(s).toLowerCase().replace(/[а-яё]/g, (c) => TRA
 const talkPath = (slug) => `data/talks/${slug}.json`;
 const textOf = (v) => String(v == null ? '' : v).replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '').trim();
 const nameField = (en, ru) => (en && ru ? { en, ru } : (en || ru || ''));
+// Up to four short lines (the speaker's titles under the name), each cleaned on its own.
+const lines = (s) => textOf(s).split('\n').map((x) => clean(x, 200)).filter(Boolean).slice(0, 4).join('\n');
 const bilingual = (en, ru) => { const o = {}; if (en) o.en = en; if (ru) o.ru = ru; return o; };
 const L = (v, lang) => (v && typeof v === 'object' ? (v[lang] || v.en || v.ru || '') : (v || ''));
 
@@ -84,8 +86,12 @@ ${fld('speaker', 'Speaker', txt('speaker', v.speaker, ' required autocomplete="o
 ${fld('speaker_ru', 'Speaker in Russian (optional)', txt('speaker_ru', v.speaker_ru))}
 ${fld('affiliation', 'Affiliation', txt('affiliation', v.affiliation))}
 ${fld('affiliation_ru', 'Affiliation in Russian (optional)', txt('affiliation_ru', v.affiliation_ru))}
-${fld('degree', 'Degree and title', txt('degree', v.degree), 'Shown next to the name, e.g. “Doctor of Economics, Professor”, “PhD student”.')}
-${fld('degree_ru', 'Degree and title in Russian (optional)', txt('degree_ru', v.degree_ru), 'Например: «доктор экономических наук, профессор», «аспирант».')}
+</div>
+<div class="form-grid2">
+${fld('titles', 'Under the name: degrees, titles, position (EN)', ta('titles', v.titles, 3), 'Shown right under the speaker’s name, one line each, in place of the affiliation line. E.g. “Senior Researcher, CEMI RAS; Candidate of Sciences (Geography)”. The full story goes to “About the speaker”.')}
+${fld('titles_ru', 'Под фамилией: степени, звания, должность (RU)', ta('titles_ru', v.titles_ru, 3), 'Строка сразу под фамилией, каждая строка — отдельно. Например: «старший научный сотрудник ЦЭМИ РАН, кандидат географических наук».')}
+</div>
+<div class="form-grid2">
 ${fld('language', 'Talk language', `<select id="language" name="language"><option value="en"${v.language !== 'ru' ? ' selected' : ''}>English</option><option value="ru"${v.language === 'ru' ? ' selected' : ''}>Russian</option></select>`, 'The language the talk is given in; shown on its page.')}
 ${fld('slug', 'Page address (slug)', txt('slug', v.slug, o.existing ? ' readonly' : ' placeholder="made from the date and the surname if left empty"'), o.existing ? 'Cannot change after publishing.' : 'Letters, digits, dots, hyphens. Example: 2026-10-21-ivanova.')}
 ${fld('photo', 'Photo', `<input id="photo" type="file" name="photo" accept=".jpg,.jpeg,.png,.webp">`, `${v.photo ? `Current: ${esc(v.photo)}. ` : ''}Portrait, at least 480×600 px, up to 8 MB; shown in black and white.`)}
@@ -120,10 +126,10 @@ ${o.existing ? `<form class="form" method="post" action="/admin/talks/delete" da
 
 function valuesFrom(t) {
   const v = { slug: t.slug || '', number: t.number || '', date: t.date || '', time: t.time || '17:00', language: t.language || 'en', photo: t.photo || '', slides: t.slides || '', minutes: t.minutes || '', zoom: t.zoom || '', video: t.video || '' };
-  const sp = t.speaker || '', af = t.affiliation || '', dg = t.degree || '';
+  const sp = t.speaker || '', af = t.affiliation || '', ti = t.titles || '';
   v.speaker = typeof sp === 'object' ? (sp.en || '') : sp; v.speaker_ru = typeof sp === 'object' ? (sp.ru || '') : '';
   v.affiliation = typeof af === 'object' ? (af.en || '') : af; v.affiliation_ru = typeof af === 'object' ? (af.ru || '') : '';
-  v.degree = typeof dg === 'object' ? (dg.en || '') : dg; v.degree_ru = typeof dg === 'object' ? (dg.ru || '') : '';
+  v.titles = typeof ti === 'object' ? (ti.en || '') : ti; v.titles_ru = typeof ti === 'object' ? (ti.ru || '') : '';
   for (const k of ['title', 'abstract', 'bio']) { v[`${k}_en`] = (t[k] && t[k].en) || ''; v[`${k}_ru`] = (t[k] && t[k].ru) || ''; }
   return v;
 }
@@ -131,7 +137,7 @@ function valuesFromForm(f) {
   const g = (k) => textOf(f.get(k));
   return { slug: g('slug'), number: g('number'), date: g('date'), time: g('time'), language: g('language') === 'ru' ? 'ru' : 'en',
     speaker: clean(g('speaker'), 200), speaker_ru: clean(g('speaker_ru'), 200), affiliation: clean(g('affiliation'), 300), affiliation_ru: clean(g('affiliation_ru'), 300),
-    degree: clean(g('degree'), 200), degree_ru: clean(g('degree_ru'), 200),
+    titles: lines(g('titles')), titles_ru: lines(g('titles_ru')),
     title_en: clean(g('title_en'), 500), title_ru: clean(g('title_ru'), 500), abstract_en: g('abstract_en').slice(0, 20000), abstract_ru: g('abstract_ru').slice(0, 20000),
     bio_en: g('bio_en').slice(0, 10000), bio_ru: g('bio_ru').slice(0, 10000), slides_url: clean(g('slides_url'), 2048), minutes_url: clean(g('minutes_url'), 2048),
     zoom: clean(g('zoom'), 2048), video: clean(g('video'), 2048) };
@@ -224,7 +230,7 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
 
       const record = {
         slug: v.slug,
-        speaker: nameField(v.speaker, v.speaker_ru), degree: nameField(v.degree, v.degree_ru), affiliation: nameField(v.affiliation, v.affiliation_ru),
+        speaker: nameField(v.speaker, v.speaker_ru), titles: nameField(v.titles, v.titles_ru), affiliation: nameField(v.affiliation, v.affiliation_ru),
         photo: t.photo || '', date: v.date, time: v.time, language: v.language,
         title: bilingual(v.title_en, v.title_ru), abstract: bilingual(v.abstract_en, v.abstract_ru), bio: bilingual(v.bio_en, v.bio_ru),
         zoom: v.zoom, video: v.video, slides: t.slides || '', minutes: t.minutes || ''
