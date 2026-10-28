@@ -152,7 +152,7 @@
     const { lang, site } = ctx;
     const s = site.strings[lang];
     const other = lang === 'en' ? 'ru' : 'en';
-    const nav = ['upcoming', 'archive', 'about', 'subscribe'].map((k) => {
+    const nav = ['upcoming', 'archive', 'about', 'propose'].map((k) => {
       const cur = page.kind === k ? ' aria-current="page"' : '';
       return `<a href="${ctx.url(lang, `/${k}/`)}"${cur}>${esc(s.nav[k])}</a>`;
     }).join('');
@@ -195,7 +195,7 @@
       <p>${esc(s.contact)}<br><a href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
     </div>
     <div class="foot-col">
-      <p>${esc(s.footerRegister)}<br><a href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
+      <p>${esc(s.footerPropose)}<br><a href="${ctx.url(lang, '/propose/')}">${esc(s.proposeTitle)}</a></p>
     </div>
     <div class="foot-col foot-theme">
       <fieldset class="theme theme-labelled" data-theme-control>
@@ -226,12 +226,18 @@
 </p>`;
   }
 
+  // The speaker's degree and title follow the name, so that a reader of the announcement can judge
+  // the talk at once (the conveners' wish, 28 Oct 2026).
+  function degreeHtml(t, lang, cls) {
+    const dg = lf(t.degree, lang);
+    return dg.text ? `<span class="${cls}"${dg.lang ? ` lang="${dg.lang}"` : ''}>, ${esc(dg.text)}</span>` : '';
+  }
   function speakerLine(t, ctx, tag) {
     const { lang } = ctx;
     const sp = lf(t.speaker, lang);
     const af = lf(t.affiliation, lang);
     const T = tag || 'p';
-    return `<${T} class="who"><span class="who-name"${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${af.text ? `<span class="who-aff"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : ''}</${T}>`;
+    return `<${T} class="who"><span class="who-line"><span class="who-name"${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${degreeHtml(t, lang, 'who-deg')}</span>${af.text ? `<span class="who-aff"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : ''}</${T}>`;
   }
 
   function portrait(t, ctx) {
@@ -289,7 +295,7 @@
       }
       return `<li class="row">
   <time class="row-date" datetime="${t.start.toISOString()}">${esc(dateTxt)}</time>
-  <span class="row-who"><span${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${af.text ? `<span class="row-aff"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : ''}</span>
+  <span class="row-who"><span><span${sp.lang ? ` lang="${sp.lang}"` : ''}>${esc(sp.text)}</span>${degreeHtml(t, lang, 'row-deg')}</span>${af.text ? `<span class="row-aff"${af.lang ? ` lang="${af.lang}"` : ''}>${esc(af.text)}</span>` : ''}</span>
   <a class="row-title" href="${ctx.url(lang, talkPath(t))}"${title.lang ? ` lang="${title.lang}"` : ''}>${esc(title.text)}</a>
   <span class="row-lang" title="${esc(s.talkIn[t.language] || '')}">${esc(s.langCode[t.language] || t.language)}</span>
   <span class="row-links">${links}</span>
@@ -320,7 +326,7 @@
       nextHtml = `<div class="next-main">
   <h3 class="empty-title">${esc(s.programmeForthcoming)}</h3>
   <p class="lede">${esc(s.announcedShortly)}</p>
-  <p class="actions"><a class="btn" href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
+  <p class="actions"><a class="btn" href="${ctx.url(lang, '/propose/')}">${esc(s.proposeTitle)}</a></p>
 </div>`;
     }
     const following = model.upcoming.slice(1, 4);
@@ -388,7 +394,7 @@ ${n ? lead : `<section class="sec">
   <div class="sec-body">
     <h2 class="empty-title">${esc(s.programmeForthcoming)}</h2>
     <p class="lede">${esc(s.announcedShortly)}</p>
-    <p class="actions"><a class="btn" href="${ctx.url(lang, '/subscribe/')}">${esc(s.registerCta)}</a></p>
+    <p class="actions"><a class="btn" href="${ctx.url(lang, '/propose/')}">${esc(s.proposeTitle)}</a></p>
   </div>
 </section>`}
 ${rest.length ? `<section class="sec">
@@ -443,27 +449,31 @@ ${sections || `<section class="sec">
 </section>
 <section class="sec">
   <h2 class="sec-label">${esc(s.contact)}</h2>
-  <div class="sec-body prose"><p>${esc(s.proposeTalk)} <a href="mailto:${esc(site.email)}">${esc(site.email)}</a>.</p></div>
+  <div class="sec-body prose"><p>${esc(s.proposeTalk)} <a href="mailto:${esc(site.email)}">${esc(site.email)}</a>.${s.proposeHowLink ? ` <a href="${ctx.url(lang, '/propose/')}">${esc(s.proposeHowLink)}</a>.` : ''}</p></div>
 </section>`;
   }
 
-  function subscribePage(ctx) {
+  function proposePage(ctx) {
     const { lang, site } = ctx;
     const s = site.strings[lang];
     // The subject travels through the phone's mail app: some (Samsung Email among them) garble non-Latin
     // letters in a mailto link, so the subject is kept to Latin letters and plain spaces.
-    const subject = String(s.subscribeSubject || '').replace(/\u00A0/g, ' ').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
+    const subject = String(s.proposeSubject || '').replace(/\u00A0/g, ' ').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
     const mail = `mailto:${site.email}${subject ? `?subject=${encodeURIComponent(subject)}` : ''}`;
+    const items = String(s.proposeItems || '').split('\n').map((x) => x.trim()).filter(Boolean);
     return `<section class="page-head">
-  <h1 class="page-title">${esc(s.subscribeTitle)}</h1>
-  <p class="lede">${esc(s.subscribeLead)}</p>
+  <h1 class="page-title">${esc(s.proposeTitle)}</h1>
 </section>
 <section class="sec">
   <div class="sec-label"></div>
   <div class="sec-body">
-    <div class="prose"><p>${esc(s.subscribeHow)}</p></div>
-    <p class="actions"><a class="btn" href="${esc(mail)}">${esc(s.subscribeButton)}</a><a class="more" href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
-    <p class="note note-wide">${esc(s.subscribeNote)}</p>
+    <div class="prose">
+      <p>${esc(s.proposeLead)}</p>
+      ${items.length ? `<ul class="propose-list">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${s.proposeAttach ? `<p>${esc(s.proposeAttach)}</p>` : ''}
+    </div>
+    <p class="actions"><a class="btn" href="${esc(mail)}">${esc(s.proposeCta)}</a><a class="more" href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
+    ${s.proposeNote ? `<p class="note note-wide">${esc(s.proposeNote)}</p>` : ''}
   </div>
 </section>`;
   }
@@ -508,7 +518,7 @@ ${sections || `<section class="sec">
 
   /* ---------- routing ---------- */
 
-  // path is language-neutral: '/', '/upcoming/', '/archive/', '/about/', '/subscribe/', '/talks/<slug>/'
+  // path is language-neutral: '/', '/upcoming/', '/archive/', '/about/', '/propose/', '/talks/<slug>/'
   function parsePath(raw) {
     let p = String(raw || '/').replace(/^#/, '');
     if (!p.startsWith('/')) p = '/' + p;
@@ -516,7 +526,7 @@ ${sections || `<section class="sec">
     if (p === '/ru' || p.startsWith('/ru/')) { lang = 'ru'; p = p.slice(3) || '/'; }
     if (!p.endsWith('/')) p += '/';
     if (p === '/') return { lang, kind: 'home', path: '/' };
-    const m = p.match(/^\/(upcoming|archive|about|subscribe)\/$/);
+    const m = p.match(/^\/(upcoming|archive|about|propose)\/$/);
     if (m) return { lang, kind: m[1], path: p };
     const tm = p.match(/^\/talks\/([A-Za-z0-9._-]+)\/$/);
     if (tm) return { lang, kind: 'talk', slug: tm[1], path: p };
@@ -552,18 +562,19 @@ ${sections || `<section class="sec">
         description = s.description;
         main = aboutPage(c, model);
         break;
-      case 'subscribe':
-        title = `${s.subscribeTitle}, ${base}`;
-        description = s.subscribeLead;
-        main = subscribePage(c);
+      case 'propose':
+        title = `${s.proposeTitle}, ${base}`;
+        description = `${s.proposeLead} ${String(s.proposeItems || '').replace(/\n/g, ' ')}`.slice(0, 300);
+        main = proposePage(c);
         break;
       case 'talk': {
         talk = model.all.find((t) => t.slug === route.slug) || null;
         if (!talk) { title = `${s.notFound}, ${base}`; description = s.notFoundText; main = notFoundPage(c); route = Object.assign({}, route, { kind: '404' }); break; }
         const tt = L(talk.title, lang);
         const sp = L(talk.speaker, lang);
+        const dg = L(talk.degree, lang);
         title = `${tt}, ${sp}, ${base}`;
-        description = `${fmtLongDate(talk.start, lang, talk.timezone)}, ${fmtTime(talk.start, talk.timezone)}. ${sp}${talk.affiliation ? ', ' + L(talk.affiliation, lang) : ''}. ${s.talkIn[talk.language] || ''}.`;
+        description = `${fmtLongDate(talk.start, lang, talk.timezone)}, ${fmtTime(talk.start, talk.timezone)}. ${sp}${dg ? ', ' + dg : ''}${talk.affiliation ? ', ' + L(talk.affiliation, lang) : ''}. ${s.talkIn[talk.language] || ''}.`;
         main = talkPage(c, talk);
         break;
       }

@@ -247,7 +247,7 @@ const routes = [
   { kind: 'upcoming', path: '/upcoming/' },
   { kind: 'archive', path: '/archive/' },
   { kind: 'about', path: '/about/' },
-  { kind: 'subscribe', path: '/subscribe/' },
+  { kind: 'propose', path: '/propose/' },
   ...talks.map((t) => ({ kind: 'talk', slug: t.slug, path: R.talkPath(t) }))
 ];
 
@@ -263,6 +263,18 @@ for (const lang of ['en', 'ru']) {
   }
   const nf = R.renderRoute({ kind: '404', path: '/404/', lang }, ctxBase, model);
   writeFileSync(join(OUT, lang === 'ru' ? 'ru/404.html' : '404.html'), document(nf));
+}
+
+// The Subscribe page became Propose a talk (28 Oct 2026); its old address forwards. A meta refresh,
+// not a script, so the page needs nothing from the CSP; noindex keeps it out of search results.
+for (const lang of ['en', 'ru']) {
+  const to = urlFor(lang, '/propose/');
+  mkdirSync(join(OUT, urlFor(lang, '/subscribe/')), { recursive: true });
+  writeFileSync(join(OUT, urlFor(lang, '/subscribe/'), 'index.html'), `<!doctype html>
+<html lang="${lang}"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=${to}">
+<link rel="canonical" href="${absUrl(to)}"><title>${R.esc(site.strings[lang].proposeTitle)}</title></head>
+<body><p><a href="${to}">${R.esc(site.strings[lang].proposeTitle)}</a></p></body></html>
+`);
 }
 
 // assets

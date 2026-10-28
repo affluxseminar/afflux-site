@@ -9,7 +9,7 @@ export const TEXT_GROUPS = [
   { title: 'Masthead and footer', fields: [
     { key: 'subtitle', label: 'Subtitle under the wordmark', max: 200 },
     { key: 'description', label: 'Description for search engines and link previews', max: 400, rows: 3 },
-    { key: 'footerRegister', label: 'Footer: about the announcements', max: 300, rows: 2 },
+    { key: 'footerPropose', label: 'Footer: about proposing a talk', max: 300, rows: 2 },
     { key: 'proposeTalk', label: 'About page, Contact: text before the address', max: 200 }
   ] },
   { title: 'Programme pages', fields: [
@@ -20,13 +20,17 @@ export const TEXT_GROUPS = [
     { key: 'joinOpenNote', label: 'Under the Zoom button', max: 300, rows: 2 },
     { key: 'joinLater', label: 'When there is no Zoom link yet', max: 300, rows: 2 }
   ] },
-  { title: 'Subscribe page', fields: [
-    { key: 'subscribeLead', label: 'Lead', max: 500, rows: 3 },
-    { key: 'subscribeHow', label: 'How to subscribe', max: 800, rows: 4 },
-    { key: 'subscribeNote', label: 'Note at the bottom', max: 800, rows: 4 },
-    { key: 'registerCta', label: 'Link and button text: subscribe', max: 80 }
+  { title: 'Propose a talk page', fields: [
+    { key: 'proposeLead', label: 'Lead (ends before the list)', max: 600, rows: 3 },
+    { key: 'proposeItems', label: 'What a proposal must contain: one item per line', max: 1200, rows: 5 },
+    { key: 'proposeAttach', label: 'After the list: what to attach', max: 400, rows: 2 },
+    { key: 'proposeNote', label: 'Note at the bottom', max: 800, rows: 3 },
+    { key: 'proposeCta', label: 'Button text', max: 80 }
   ] }
 ];
+/* Keys of texts that no longer exist (the Subscribe page, retired 28 Oct 2026). A texts file written
+   before may still carry them; they are ignored rather than refused, so the site keeps building. */
+export const RETIRED_KEYS = ['footerRegister', 'subscribeLead', 'subscribeHow', 'subscribeNote', 'registerCta'];
 export const TEXT_KEYS = TEXT_GROUPS.flatMap((g) => g.fields.map((f) => f.key));
 export const LANGS = ['en', 'ru'];
 export const LIMITS = { paragraph: 5000, paragraphs: 12, conveners: 4, name: 120, credential: 300, credentials: 12 };
@@ -48,6 +52,7 @@ export function validateTexts(t) {
       if (!o || typeof o !== 'object' || Array.isArray(o)) { errors.push(`strings.${lang} must be an object`); continue; }
       for (const k of Object.keys(o)) {
         const f = TEXT_GROUPS.flatMap((g) => g.fields).find((x) => x.key === k);
+        if (!f && RETIRED_KEYS.includes(k)) continue;
         if (!f) { errors.push(`strings.${lang}.${k} is not an editable text`); continue; }
         if (!isStr(o[k])) errors.push(`strings.${lang}.${k} must be a string`);
         else if (o[k].length > f.max) errors.push(`strings.${lang}.${k} is longer than ${f.max} characters`);

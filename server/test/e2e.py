@@ -72,7 +72,7 @@ with sync_playwright() as p:
     ctx=b.new_context(); stub(ctx); pg=ctx.new_page()
     resp=pg.goto(B+'/go/join/2026-10-15-test/')
     ok(resp.status==401 and 'zoom.example' not in pg.content(), f'anonymous /go -> gate {resp.status}, destination hidden')
-    ok(pg.evaluate("!document.querySelector('a[data-nav-account]') && !!document.querySelector('.site-nav a[href$=\"/subscribe/\"]')"), 'nav has Subscribe and no account link (the public site keeps no accounts)')
+    ok(pg.evaluate("!document.querySelector('a[data-nav-account]') && !!document.querySelector('.site-nav a[href$=\"/propose/\"]')"), 'nav has Propose a talk and no account link (the public site keeps no accounts)')
     pg.click('a.btn:has-text("Register")'); ok(pg.url.endswith('/register/'), 'gate -> register page')
     pg.fill('#name','Test Person'); pg.fill('#email','person@example.org'); pg.fill('#affiliation','Test Institute'); pg.check('#list_en')
     pg.click('button:has-text("Register")'); pg.wait_for_url('**/api/register'); pg.wait_for_timeout(200)

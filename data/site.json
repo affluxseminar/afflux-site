@@ -77,7 +77,7 @@
         "upcoming": "Upcoming",
         "archive": "Archive",
         "about": "About",
-        "subscribe": "Subscribe"
+        "propose": "Propose a talk"
       },
       "skip": "Skip to content",
       "langSwitch": "Language",
@@ -86,7 +86,7 @@
       "recentRecordings": "Recent recordings",
       "allRecordings": "All recordings in the archive",
       "upcomingTitle": "Upcoming seminars",
-      "noUpcoming": "No seminars are scheduled at the moment. The next one is announced on the mailing list about a week ahead.",
+      "noUpcoming": "No seminars are scheduled at the moment.",
       "archiveTitle": "Archive",
       "archiveIntro": "Recordings, slides and minutes of past sessions, published with the speakers' permission.",
       "aboutTitle": "About the seminar",
@@ -120,7 +120,7 @@
       "conveners": "Conveners",
       "navLabel": "Main",
       "programmeForthcoming": "Programme forthcoming",
-      "announcedShortly": "The next seminar will be announced shortly; subscribers receive the announcement by email.",
+      "announcedShortly": "The next seminar will be announced shortly.",
       "archiveEmpty": "The archive opens with the first recorded session.",
       "aboutShort": "About the seminar",
       "readMore": "More about the seminar",
@@ -128,12 +128,10 @@
       "theme": {
         "light": "Light",
         "dark": "Dark",
-        "deep": "Deep"
+        "deep": "Night"
       },
       "synopsis": "Synopsis",
       "joinLater": "The link to join will appear here before the session.",
-      "registerCta": "Subscribe to announcements",
-      "footerRegister": "Announcements of each session reach the mailing list about a week ahead.",
       "account": {
         "registerTitle": "Register",
         "registerLead": "A free account is needed to join sessions and watch recordings. Registration takes one email: we send you a link, you open it, and you are in. No password.",
@@ -208,12 +206,15 @@
       "minutes": "Minutes of the session (PDF)",
       "minutesShort": "Minutes",
       "joinOpenNote": "Open to all. The meeting opens when the host starts it.",
-      "subscribeTitle": "Subscribe",
-      "subscribeLead": "Announcements of the sessions are sent by email about a week ahead, with the title, the abstract and the link to join.",
-      "subscribeHow": "To subscribe, write to the seminar address. Please say whether you would like announcements of English-language sessions, Russian-language sessions, or both.",
-      "subscribeButton": "Write to subscribe",
-      "subscribeSubject": "Subscription to EEES announcements",
-      "subscribeNote": "The address is used only for the seminar’s own mailings and is never published or passed on. Every announcement ends with an unsubscribe link; you can also unsubscribe by writing to the same address. This site itself keeps no data about its visitors: no accounts, no forms, no analytics."
+      "proposeTitle": "Propose a talk",
+      "proposeLead": "Proposals for talks are welcome by email to the seminar address. A proposal should state:",
+      "proposeItems": "the surnames, first names and patronymics (or middle names) of the speakers;\ntheir affiliations and positions;\ntheir academic degrees and titles, or level of qualification (professor, associate professor, master, bachelor, PhD student, student).",
+      "proposeAttach": "Please attach the theses of the talk or its abstract.",
+      "proposeNote": "Degrees and titles are given next to the speaker’s name in the announcement, so that readers can judge the talk at a glance.",
+      "proposeCta": "Write a proposal",
+      "proposeSubject": "EEES: talk proposal",
+      "footerPropose": "Proposals for talks are welcome at the seminar address.",
+      "proposeHowLink": "What a proposal should contain"
     },
     "ru": {
       "subtitle": "Семинар «Экономика энергетики и окружающей среды»",
@@ -224,7 +225,7 @@
         "upcoming": "Ближайшие",
         "archive": "Архив",
         "about": "О семинаре",
-        "subscribe": "Подписка"
+        "propose": "Предложить доклад"
       },
       "skip": "К содержанию",
       "langSwitch": "Язык",
@@ -233,7 +234,7 @@
       "recentRecordings": "Недавние записи",
       "allRecordings": "Все записи в архиве",
       "upcomingTitle": "Ближайшие семинары",
-      "noUpcoming": "Ближайшие заседания пока не назначены. Анонс следующего рассылается примерно за неделю.",
+      "noUpcoming": "Ближайшие заседания пока не назначены.",
       "archiveTitle": "Архив",
       "archiveIntro": "Записи, презентации и протоколы прошедших заседаний, опубликованные с согласия докладчиков.",
       "aboutTitle": "О семинаре",
@@ -267,7 +268,7 @@
       "conveners": "Руководители семинара",
       "navLabel": "Основные разделы",
       "programmeForthcoming": "Программа готовится",
-      "announcedShortly": "Следующее заседание будет объявлено в скором времени; подписчики получат анонс по почте.",
+      "announcedShortly": "Следующее заседание будет объявлено в ближайшее время.",
       "archiveEmpty": "Архив откроется с первой записанной сессии.",
       "aboutShort": "О семинаре",
       "readMore": "Подробнее о семинаре",
@@ -275,12 +276,10 @@
       "theme": {
         "light": "Светлая",
         "dark": "Тёмная",
-        "deep": "Глубокая"
+        "deep": "Ночная"
       },
       "synopsis": "Кратко",
       "joinLater": "Ссылка для подключения появится здесь перед заседанием.",
-      "registerCta": "Подписаться на анонсы",
-      "footerRegister": "Анонс каждого заседания приходит подписчикам рассылки примерно за неделю.",
       "account": {
         "registerTitle": "Регистрация",
         "registerLead": "Для подключения к заседаниям и просмотра записей нужен бесплатный аккаунт. Регистрация — одно письмо: мы присылаем ссылку, вы открываете её — и вы на сайте. Без пароля.",
@@ -355,23 +354,26 @@
       "minutes": "Протокол заседания (PDF)",
       "minutesShort": "Протокол",
       "joinOpenNote": "Заседание открытое. Конференция откроется, когда её начнёт организатор.",
-      "subscribeTitle": "Подписка",
-      "subscribeLead": "Анонсы заседаний рассылаются по почте примерно за неделю: название, аннотация и ссылка для подключения.",
-      "subscribeHow": "Чтобы подписаться, напишите на адрес семинара. Укажите, пожалуйста, анонсы каких заседаний вы хотите получать: на русском языке, на английском или все.",
-      "subscribeButton": "Написать, чтобы подписаться",
-      "subscribeSubject": "EEES: subscription to announcements",
-      "subscribeNote": "Адрес используется только для рассылок семинара, не публикуется и никому не передаётся. В конце каждого письма есть ссылка для отписки; можно и просто написать на тот же адрес. Сам сайт не хранит никаких данных о посетителях: здесь нет аккаунтов, форм и счётчиков."
+      "proposeTitle": "Предложить доклад",
+      "proposeLead": "Предложения выступить с докладом направляйте по электронной почте на адрес семинара. В предложении укажите:",
+      "proposeItems": "фамилии, имена и отчества докладчиков;\nаффилиации и должности;\nучёные степени и звания или уровень квалификации (профессор, доцент, магистр, бакалавр, аспирант, студент).",
+      "proposeAttach": "К предложению приложите тезисы доклада или аннотацию.",
+      "proposeNote": "Учёные степени и звания приводятся в объявлении рядом с фамилией докладчика, чтобы читатель сразу мог составить представление о предстоящем докладе.",
+      "proposeCta": "Написать предложение",
+      "proposeSubject": "EEES: talk proposal",
+      "footerPropose": "Предложения докладов принимаются по адресу семинара.",
+      "proposeHowLink": "Что указать в предложении"
     }
   },
   "about": {
     "en": [
-      "EEES is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky. It meets online and brings together economists, physicists, engineers and policy researchers working on energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
+      "EEES is the international research seminar on the Economics of Energy and the Environment, convened since 2011 by Victor Polterovich and Sergey Chernavsky. It meets online; its subjects are energy markets, natural resources and the environment, complex systems, technological change and optimisation.",
       "Talks are given in English or in Russian. Sessions are open: the link to join is on the page of each talk, and announcements are sent to the mailing list about a week ahead.",
       "Recordings are published with the speakers' permission, usually within a few days of the session; slides and the minutes of the discussion are published as they arrive. Comments and suggestions are welcome at the seminar address."
     ],
     "ru": [
-      "EEES — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского. Семинар проходит онлайн и объединяет экономистов, физиков, инженеров и исследователей политики, работающих с энергетическими рынками, природными ресурсами и окружающей средой, сложными системами, технологическими изменениями и оптимизацией.",
-      "Доклады читаются на английском или на русском языке. Заседания открытые: ссылка для подключения — на странице доклада, а анонс рассылается подписчикам примерно за неделю.",
+      "EEES — международный научный семинар «Экономика энергетики и окружающей среды», работающий с 2011 года под руководством В. М. Полтеровича и С. Я. Чернавского. Семинар проходит онлайн; его темы — энергетические рынки, природные ресурсы и окружающая среда, сложные системы, технологические изменения и оптимизация.",
+      "Доклады читаются на английском или на русском языке. Заседания открытые: ссылка для подключения — на странице доклада, а анонс рассылается по списку рассылки примерно за неделю.",
       "Записи публикуются с согласия докладчиков, как правило, в течение нескольких дней после заседания; презентации и протоколы обсуждений — по мере поступления. Комментарии и пожелания руководителям семинара можно направить на адрес семинара."
     ]
   },
