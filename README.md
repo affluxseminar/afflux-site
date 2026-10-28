@@ -14,8 +14,10 @@ data at all: no registration, no accounts, no mailing list on the site (Russian 
 localisation of personal data and on sign-in methods made the account-based design untenable for
 a seminar run from Russia with this audience). The link to join and the recording are public
 fields of each talk, shown to everyone; the meeting itself does not start before its host
-(Zoom settings). Announcements go out from the seminar's own mailbox; the Subscribe page tells
-people to write to it. The public site is served by GitHub Pages at `eeeseminar.org`
+(Zoom settings). Announcements go out from the seminar's own mailbox to its own list; there is no
+subscription on the site. The Propose a talk page (`/propose/`, since 28 Oct 2026; `/subscribe/`
+forwards there) says what a proposal must contain. A talk's optional `degree` (EN/RU) is shown next
+to the speaker's name. The public site is served by GitHub Pages at `eeeseminar.org`
 (reachable from Russia, where Cloudflare-proxied sites are throttled); the Worker in `server/` is
 the admin only, at `admin.eeeseminar.org`, with `REGISTRATION = "closed"`. The registration,
 sign-in and announcement code described further down is dormant, kept for a future that can host
@@ -102,7 +104,7 @@ before the rebuild.
 ## The site's own texts
 
 The About page, the conveners' names and credentials, and the short texts of the masthead, footer,
-programme pages and Subscribe page are edited in the admin (`/admin/texts`, two languages side by
+programme pages and Propose a talk page are edited in the admin (`/admin/texts`, two languages side by
 side) and saved to the content repository as `data/site-texts.json`. The build checks that file
 (`src/texts.js`: only the listed fields, length limits, paragraphs and credential lines as plain
 strings) and merges it over the defaults in `data/site.json`; an empty field means the default.
