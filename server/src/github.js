@@ -69,11 +69,13 @@ export const content = {
 /* The public site is built by a workflow in the code repository (SITE_REPO). GitHub runs the
    workflow's scheduled check late, or drops it, when Actions is busy (in November 2026 it ran
    about once every four hours), so after every change the admin asks for a build at once:
-   workflow_dispatch, the same thing as "Run workflow" on GitHub. The token needs
-   "Actions: read and write" on that repository: GITHUB_DISPATCH_TOKEN if it is set, otherwise
-   the content token with that one permission added. Such a token can start a build of the
-   code as it stands; it cannot change code. Never throws: the change itself is already saved,
-   and the scheduled check stays as the fallback. */
+   workflow_dispatch, the same thing as "Run workflow" on GitHub. GITHUB_DISPATCH_TOKEN: a
+   fine-grained token for that repository only, "Actions: read and write" and nothing else; it
+   can start a build of the code as it stands, not change the code. (The content token is tried
+   when it is absent, for a setup that grants both; do not add the site repository to the
+   content token: a token's permissions cover every repository it lists, so its Contents write
+   would reach the code.) Never throws: the change itself is already saved, and the scheduled
+   check stays as the fallback. */
 const siteRepo = (env) => String(env.SITE_REPO || '');
 
 export async function rebuildSite(env) {
