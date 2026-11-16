@@ -35,6 +35,8 @@ with sync_playwright() as p:
             'title_en':'Editor test talk','title_ru':'','abstract_en':'First paragraph.\r\n\r\nSecond.','abstract_ru':'','bio_en':'Bio.','bio_ru':'','zoom':'https://zoom.example.org/j/555','video':'','slides_url':'','minutes_url':''}
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields, 'photo':{'name':'p.jpg','mimeType':'image/jpeg','buffer':JPG}, 'slides_file':{'name':'s.pdf','mimeType':'application/pdf','buffer':PDF}}, headers={'Origin':B}, max_redirects=0)
     ok(r.status==303 and r.headers.get('location','').startswith('/admin/talks?s=saved'), f'talk published ({r.status})')
+    dsp=get(M+'/_dispatches'); ok(dsp==[{'repo':'afflux-test/afflux-site','workflow':'build.yml','ref':'main'}] and r.headers.get('location','').endswith('&r=1'), 'publishing asks GitHub to build the site at once (workflow_dispatch)')
+    ap.goto(B+r.headers.get('location','/admin/talks')); ok('Saved. The public site updates in 3–4 minutes.' in ap.content() and 'Update the site now' in ap.content(), 'programme page: updates in 3–4 minutes, and the “Update the site now” button')
     repo={x['path']:x for x in get(M+'/_repo')}
     t=json.loads(repo.get('data/talks/2026-11-05-ivanova.json',{}).get('text') or '{}')
     ok(t.get('slug')=='2026-11-05-ivanova' and t.get('speaker')=={'en':'Anna Ivanova','ru':'Анна Иванова'} and t.get('zoom')=='https://zoom.example.org/j/555' and t.get('video')=='' and 'join' not in t and t.get('photo')=='2026-11-05-ivanova.jpg' and t.get('slides')=='2026-11-05-ivanova-slides.pdf' and t.get('abstract',{}).get('en')=='First paragraph.\n\nSecond.', 'talk file written with derived slug, flags, photo and slides names')
@@ -43,7 +45,7 @@ with sync_playwright() as p:
     e=ap.request.get(B+'/admin/talks/edit?slug=2026-11-05-ivanova'); ok(e.status==200 and 'value="https://zoom.example.org/j/555"' in e.text() and 'value="Anna Ivanova"' in e.text(), 'edit form prefilled with the public Zoom link')
     sha=re.search(r'name="sha" value="([^"]+)"', e.text()).group(1)
     upd={**fields,'existing':'1','sha':sha,'slug':'2026-11-05-ivanova','title_ru':'Тест редактора','zoom':'','video':'https://video.example.org/rec/9'}
-    r=ap.request.post(B+'/admin/talks/save', multipart=upd, headers={'Origin':B}, max_redirects=0); ok(r.status==303, f'talk updated ({r.status})')
+    r=ap.request.post(B+'/admin/talks/save', multipart=upd, headers={'Origin':B}, max_redirects=0); ok(r.status==303 and len(get(M+'/_dispatches'))==2, f'talk updated, and another build requested ({r.status})')
     t=json.loads({x['path']:x for x in get(M+'/_repo')}['data/talks/2026-11-05-ivanova.json']['text'])
     ok(t['title']=={'en':'Editor test talk','ru':'Тест редактора'} and t['zoom']=='' and t['video']=='https://video.example.org/rec/9' and t['photo']=='2026-11-05-ivanova.jpg', 'update: empty field removes the Zoom link, adds the recording, keeps the photo')
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'slug':'x-bad-zoom','zoom':'https://evil.example/j/1'}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'zoom.us' in r.text(), 'Zoom link on a foreign host refused')
@@ -54,13 +56,21 @@ with sync_playwright() as p:
     r=ap.request.post(B+'/admin/talks/save', multipart={**fields,'slug':'2026-11-05-ivanova'}, headers={'Origin':B}, max_redirects=0); ok(r.status==422 and 'already exists' in r.text(), 'publishing over an existing address refused')
     r=ap.request.post(B+'/admin/talks/delete', form={'slug':'2026-11-05-ivanova'}, headers={'Origin':B}, max_redirects=0)
     ok(r.status==303 and 'data/talks/2026-11-05-ivanova.json' not in {x['path'] for x in get(M+'/_repo')}, 'delete removes the talk file; documents stay')
+    n=len(get(M+'/_dispatches')); ok(n==3 and r.headers.get('location','').endswith('&r=1'), 'delete asks for a site build as well')
+    r=ap.request.post(B+'/admin/talks/rebuild', form={'go':'1'}, headers={'Origin':B}, max_redirects=0)
+    ok(r.status==303 and r.headers.get('location','')=='/admin/talks?s=rebuild&r=1' and len(get(M+'/_dispatches'))==n+1, '“Update the site now” starts a build without changing anything')
+    urllib.request.urlopen(M+'/_dispatch_status?status=403').read()
+    r=ap.request.post(B+'/admin/talks/rebuild', form={'go':'1'}, headers={'Origin':B}, max_redirects=0); loc=r.headers.get('location','')
+    ap.goto(B+loc); ok(loc.endswith('r=0&why=auth') and 'needs “Actions: read and write”' in ap.content() and len(get(M+'/_dispatches'))==n+1, 'a refused build request is reported, naming the missing permission')
+    urllib.request.urlopen(M+'/_dispatch_status?status=204').read()
+    r=b.new_context().request.post(B+'/admin/talks/rebuild', form={'go':'1'}, headers={'Origin':'https://evil.example'}, max_redirects=0); ok(r.status==403 and len(get(M+'/_dispatches'))==n+1, 'build request from a foreign origin refused')
     anon2=b.new_context(); r=anon2.request.get(B+'/admin/talks', headers={'Host':'example.org'}); ok(r.status==403, 'programme editor closed without Access on a non-loopback host'); anon2.close()
     # ---- site texts editor: About, conveners and the short texts go to data/site-texts.json ----
     ap.goto(B+'/admin/texts'); h=ap.content()
     ok('name="s_ru_subtitle"' in h and 'Economics of Energy' in h and '<a href="/admin/texts">Texts</a>' in h, 'texts editor shows the current texts and is in the admin nav')
     tv={n: ap.evaluate("n=>document.querySelector(`[name=\"${n}\"]`).value", n) for n in ap.evaluate("[...document.querySelectorAll('form[action=\"/admin/texts/save\"] [name]')].map(e=>e.name)")}
     tv.update({'about_ru':'Первый абзац.\r\n\r\nВторой абзац\r\nпродолжение.', 's_ru_subtitle':'Семинар (тест)', 'c0_cred_ru':'Академик РАН\r\n\r\nПрофессор', 'c2_name_en':'Third Person'})
-    r=ap.request.post(B+'/admin/texts/save', form=tv, headers={'Origin':B}, max_redirects=0); ok(r.status==303, f'texts saved ({r.status})')
+    r=ap.request.post(B+'/admin/texts/save', form=tv, headers={'Origin':B}, max_redirects=0); ok(r.status==303 and r.headers.get('location','').endswith('&r=1'), f'texts saved, and a site build requested ({r.status})')
     tf={x['path']:x for x in get(M+'/_repo')}['data/site-texts.json']; tj=json.loads(tf['text'])
     ok(tj['about']['ru']==['Первый абзац.','Второй абзац продолжение.'] and tj['strings']['ru']['subtitle']=='Семинар (тест)' and tj['conveners'][0]['credentials']['ru']==['Академик РАН','Профессор'] and tj['conveners'][2]['name']['en']=='Third Person', 'site-texts.json carries paragraphs, strings, credential lines and the added convener')
     ap.goto(B+'/admin/texts?s=saved'); h=ap.content(); ok('Семинар (тест)' in h and 'Второй абзац продолжение.' in h and 'name="c3_name_en"' in h, 'reloaded editor shows the saved texts and one more convener slot')

@@ -3,7 +3,7 @@
    GitHub Contents API. The seminar is open (owner's decision, 13 Oct 2026): the Zoom invitation and
    the recording are public fields of the talk, shown on its page to everyone; the site keeps nothing
    about participants. The site rebuilds itself from the repository within minutes. */
-import { content } from '../github.js';
+import { content, rebuildSite, rebuildQuery, rebuildNote } from '../github.js';
 import { html, redirect } from './auth.js';
 import { clean, allowedLinkHost, readForm, MAX_UPLOAD_BODY } from '../security.js';
 import * as P from '../pages.js';
@@ -118,7 +118,7 @@ ${fld('minutes_url', 'Minutes: or a link', txt('minutes_url', URL_RE.test(v.minu
 </div>
 ${v.slides || v.minutes ? `<p class="note"><label class="inline"><input type="checkbox" name="clear_slides" value="1"> Remove slides</label> &nbsp; <label class="inline"><input type="checkbox" name="clear_minutes" value="1"> Remove minutes</label></p>` : ''}
 <p class="actions"><button class="btn" type="submit">${o.existing ? 'Save changes' : 'Publish'}</button><a class="more" href="/admin/talks">Back to the programme</a></p>
-<p class="note">Publishing writes the talk to the content repository; the site rebuilds itself and shows the change within about 15 minutes.</p>
+<p class="note">Publishing writes the talk to the content repository and asks GitHub to rebuild the site: the change appears in 3–4 minutes.</p>
 </form>
 ${o.existing ? `<form class="form" method="post" action="/admin/talks/delete" data-confirm="Delete this talk from the programme? Its photo and documents stay in the repository."><input type="hidden" name="slug" value="${esc(v.slug)}"><p class="actions"><button class="btn btn-quiet" type="submit">Delete talk</button></p></form>` : ''}
 </div></section>`;
@@ -162,12 +162,14 @@ export async function talksAdmin(req, env, sub, who) {
       .sort((a, b) => ((b.t && b.t.date) || b.slug).localeCompare((a.t && a.t.date) || a.slug));
     const st = url.searchParams.get('s');
     const main = `<section class="sec"><h2 class="sec-label">Programme</h2><div class="sec-body">
-${st === 'saved' ? '<p class="form-status">Saved. The public site updates within about 15 minutes.</p>' : st === 'deleted' ? '<p class="form-status">Deleted.</p>' : ''}
+${st === 'saved' || st === 'deleted' || st === 'rebuild' ? `<p class="form-status">${st === 'saved' ? 'Saved. ' : st === 'deleted' ? 'Deleted. ' : ''}${esc(rebuildNote(url.searchParams))}</p>` : ''}
 ${note ? `<p class="form-status">${esc(note)}</p>` : ''}
 <p class="actions"><a class="btn" href="/admin/talks/new">New talk</a></p>
 ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
       return `<li class="row"><time class="row-date">${esc(t ? t.date : '—')}</time><span class="row-who"><span>${esc(t ? L(t.speaker, 'en') : '')}</span><span class="row-aff">${esc(t ? (t.status === 'past' ? 'archive' : t.status) : 'publishing…')}${!inRepo ? ' · not in the repository' : ''}</span></span><a class="row-title" href="/admin/talks/edit?slug=${esc(slug)}">${esc(t ? (L(t.title, 'en') || L(t.title, 'ru')) : slug)}</a><span class="row-lang">${esc(t ? t.language.toUpperCase() : '')}</span><span class="row-links">${t && t.join ? '<span>Zoom ✓</span>' : ''}${t && t.recording ? '<span>Rec ✓</span>' : ''}${closed ? '' : `<a href="/admin/announce?slug=${esc(slug)}">Announce</a>`}</span></li>`;
     }).join('')}</ol>` : '<p class="note">No talks yet.</p>'}
+<form class="form" method="post" action="/admin/talks/rebuild"><p class="actions"><button class="btn btn-quiet" type="submit">Update the site now</button></p>
+<p class="note">The site rebuilds by itself after Publish, Save changes and Delete. Use this if a change has not appeared, or right after a seminar to move it to the archive at once.</p></form>
 </div></section>`;
     return page('Programme', main);
   }
@@ -244,7 +246,12 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
       errors.push(msg);
       return html(P.adminPage({ title: existing ? 'Edit talk' : 'New talk', main: form(v, { existing, sha: String(f.get('sha') || ''), errors }), who, closed }), e.code === 'E_CONTENT_CONFLICT' ? 409 : 502);
     }
-    return redirect(`/admin/talks?s=saved&slug=${encodeURIComponent(v.slug)}`);
+    return redirect(`/admin/talks?s=saved&slug=${encodeURIComponent(v.slug)}&${rebuildQuery(await rebuildSite(env))}`);
+  }
+
+  if (sub === '/talks/rebuild') {
+    if (!isPost) return redirect('/admin/talks');
+    return redirect(`/admin/talks?s=rebuild&${rebuildQuery(await rebuildSite(env))}`);
   }
 
   if (sub === '/talks/delete') {
@@ -259,7 +266,7 @@ ${rows.length ? `<ol class="ledger">${rows.map(({ slug, t, inRepo }) => {
       const msg = contentError(e); if (!msg) throw e;
       return page('Programme', `<section class="sec"><div class="sec-label"></div><div class="sec-body"><p class="form-status">${esc(msg)}</p><p class="actions"><a class="more" href="/admin/talks">Back</a></p></div></section>`);
     }
-    return redirect('/admin/talks?s=deleted');
+    return redirect(`/admin/talks?s=deleted&${rebuildQuery(await rebuildSite(env))}`);
   }
   return new Response('Not found', { status: 404 });
 }

@@ -65,3 +65,51 @@ export const content = {
     await call(env, 'DELETE', path, { message, sha, branch: branch(env) });
   }
 };
+
+/* The public site is built by a workflow in the code repository (SITE_REPO). GitHub runs the
+   workflow's scheduled check late, or drops it, when Actions is busy (in November 2026 it ran
+   about once every four hours), so after every change the admin asks for a build at once:
+   workflow_dispatch, the same thing as "Run workflow" on GitHub. The token needs
+   "Actions: read and write" on that repository: GITHUB_DISPATCH_TOKEN if it is set, otherwise
+   the content token with that one permission added. Such a token can start a build of the
+   code as it stands; it cannot change code. Never throws: the change itself is already saved,
+   and the scheduled check stays as the fallback. */
+const siteRepo = (env) => String(env.SITE_REPO || '');
+
+export async function rebuildSite(env) {
+  const token = env.GITHUB_DISPATCH_TOKEN || env.GITHUB_CONTENT_TOKEN;
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(siteRepo(env)) || !token) return { ok: false, why: 'config' };
+  const workflow = encodeURIComponent(String(env.SITE_WORKFLOW || 'build.yml'));
+  try {
+    const res = await fetch(`${base(env)}/repos/${siteRepo(env)}/actions/workflows/${workflow}/dispatches`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'afflux-server',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ref: String(env.SITE_BRANCH || 'main') })
+    });
+    if (res.ok) return { ok: true };
+    return { ok: false, why: res.status === 401 || res.status === 403 || res.status === 404 ? 'auth' : 'error', status: res.status };
+  } catch (e) {
+    return { ok: false, why: 'error' };
+  }
+}
+
+/* The query that carries the outcome to the page after the redirect, and the sentence it becomes. */
+export const rebuildQuery = (rb) => (rb.ok ? 'r=1' : `r=0&why=${encodeURIComponent(rb.why || 'error')}`);
+
+export function rebuildNote(params) {
+  const r = params.get('r');
+  if (r === '1') return 'The public site updates in 3–4 minutes.';
+  if (r !== '0') return '';
+  const why = params.get('why');
+  const later = 'The site updates at the next automatic check, which can take a few hours.';
+  if (why === 'auth') return `The site could not be rebuilt at once: GitHub refused the admin’s token, which needs “Actions: read and write” on the site repository. ${later}`;
+  if (why === 'config') return `The site could not be rebuilt at once: SITE_REPO is not set for the admin. ${later}`;
+  return `The site could not be rebuilt at once: GitHub did not answer. ${later} You can try “Update the site now” in a minute.`;
+}

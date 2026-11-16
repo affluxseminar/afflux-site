@@ -5,7 +5,7 @@
    data/site.json (src/texts.js). The public site rebuilds itself within minutes. */
 import siteJson from '../../../data/site.json';
 import { TEXT_GROUPS, LANGS, LIMITS, validateTexts, applyTexts, textsOf } from '../../../src/texts.js';
-import { content } from '../github.js';
+import { content, rebuildSite, rebuildQuery, rebuildNote } from '../github.js';
 import { html, redirect } from './auth.js';
 import { readForm } from '../security.js';
 import * as P from '../pages.js';
@@ -34,7 +34,7 @@ const pair = (label, hint, cells) => `<div class="field"><p class="form-label">$
 
 function form(t, o) {
   const err = o.errors && o.errors.length ? `<div class="form-status" role="alert">${o.errors.map((x) => `<div>${esc(x)}</div>`).join('')}</div>` : '';
-  const saved = o.saved ? '<p class="form-status">Saved. The public site updates within about 15 minutes.</p>' : '';
+  const saved = o.saved ? `<p class="form-status">Saved. ${esc(o.rebuild || '')}</p>` : '';
   const groups = TEXT_GROUPS.map((g) => `<h3 class="form-h">${esc(g.title)}</h3>` + g.fields.map((f) => pair(f.label, '', {
     id: (l) => `s_${l}_${f.key}`,
     html: (l) => (f.rows ? ta(`s_${l}_${f.key}`, t.strings[l][f.key], f.rows, f.max) : input(`s_${l}_${f.key}`, t.strings[l][f.key], f.max))
@@ -105,7 +105,7 @@ export async function textsAdmin(req, env, sub, who) {
       if (overrides && validateTexts(overrides).length) { note = `The file ${PATH} in the repository has problems (${validateTexts(overrides)[0]}); saving this form replaces it.`; overrides = null; }
     }
     const t = textsOf(applyTexts(siteJson, overrides));
-    return page(form(t, { sha: file ? file.sha : '', errors: note ? [note] : [], saved: url.searchParams.get('s') === 'saved' }));
+    return page(form(t, { sha: file ? file.sha : '', errors: note ? [note] : [], saved: url.searchParams.get('s') === 'saved', rebuild: rebuildNote(url.searchParams) }));
   }
 
   if (sub === '/texts/save') {
@@ -122,7 +122,7 @@ export async function textsAdmin(req, env, sub, who) {
     } catch (e) {
       return page(form(t, { sha, errors: [contentError(e) || 'Could not save to the content repository.'] }), e.code === 'E_CONTENT_CONFLICT' ? 409 : 502);
     }
-    return redirect('/admin/texts?s=saved');
+    return redirect(`/admin/texts?s=saved&${rebuildQuery(await rebuildSite(env))}`);
   }
   return new Response('Not found', { status: 404 });
 }
