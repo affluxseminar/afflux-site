@@ -7,10 +7,6 @@ import { createHash } from 'node:crypto';
 /* And a stand-in for the GitHub Contents API (the content repository): an in-memory map of
    path → { content (base64), sha }. GET /_repo lists it; /_reset clears it with the outbox. */
 const repo = new Map();
-/* And the workflow-dispatch endpoint of the site repository: the admin asks for a site build after a
-   change. GET /_dispatches lists the requests; /_dispatch_status?status=403 makes the next ones fail. */
-const dispatches = [];
-let dispatchStatus = 204;
 const shaOf = (b64) => createHash('sha1').update(b64).digest('hex');
 
 const outbox = [];
@@ -23,17 +19,7 @@ createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   if (u.pathname === '/_outbox') return json(res, 200, outbox);
   if (u.pathname === '/_last_link') return json(res, 200, { link: lastLink });
-  if (u.pathname === '/_reset') { outbox.length = 0; lastLink = null; delayMs = 0; repo.clear(); dispatches.length = 0; dispatchStatus = 204; return json(res, 200, {}); }
-  if (u.pathname === '/_dispatches') return json(res, 200, dispatches);
-  if (u.pathname === '/_dispatch_status') { dispatchStatus = Number(u.searchParams.get('status') || 204); return json(res, 200, { dispatchStatus }); }
-  const wd = u.pathname.match(/^\/repos\/([^/]+\/[^/]+)\/actions\/workflows\/([^/]+)\/dispatches$/);
-  if (wd && req.method === 'POST') {
-    if (req.headers.authorization !== 'Bearer github-test-local') return json(res, 401, { message: 'Bad credentials' });
-    const body = await readBody(req);
-    if (dispatchStatus !== 204) return json(res, dispatchStatus, { message: 'Resource not accessible by personal access token' });
-    dispatches.push({ repo: wd[1], workflow: decodeURIComponent(wd[2]), ref: body.ref });
-    res.writeHead(204); return res.end();
-  }
+  if (u.pathname === '/_reset') { outbox.length = 0; lastLink = null; delayMs = 0; repo.clear(); return json(res, 200, {}); }
   if (u.pathname === '/_repo') return json(res, 200, [...repo.entries()].map(([path, v]) => ({ path, sha: v.sha, size: Buffer.from(v.content, 'base64').length, text: path.endsWith('.json') ? Buffer.from(v.content, 'base64').toString('utf8') : null })));
   const gh = u.pathname.match(/^\/repos\/[^/]+\/[^/]+\/contents\/(.+)$/);
   if (gh) {

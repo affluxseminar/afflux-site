@@ -98,7 +98,7 @@ page show Recording, Slides and Minutes links for whatever is present.
 With no entries the site shows "Programme forthcoming" and an empty archive; nothing is invented.
 
 Past seminars move to the Archive at the next build. The workflow rebuilds whenever the programme
-changes (the admin asks for a build after each change; a check every 10 minutes is the fallback), and `client.js` retires the join link the moment a session ends,
+changes (polled every 10 minutes), and `client.js` retires the join link the moment a session ends,
 before the rebuild.
 
 ## The site's own texts
@@ -185,7 +185,7 @@ only outbound request a visitor's browser makes is the subscription form's POST 
 end-to-end checks, publishes `dist/` to GitHub Pages (the public site, custom domain
 `eeeseminar.org`, HTTPS enforced — Settings → Pages, source "GitHub Actions") and deploys the
 Worker (the admin, `admin.eeeseminar.org`) with two repository secrets (`CLOUDFLARE_API_TOKEN`,
-`CLOUDFLARE_ACCOUNT_ID`). It runs on push, on demand (the admin starts it after each change), and every 10 minutes when the programme
+`CLOUDFLARE_ACCOUNT_ID`). It runs on push, on demand, and every 10 minutes when the programme
 changed. DNS, Cloudflare Access on the admin and the rest of the Cloudflare side are set by
 `tools/cf-setup.mjs` (the "Cloudflare setup" workflow). The static site alone works on any static
 host.

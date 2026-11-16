@@ -93,16 +93,7 @@ with the fields of the brief — speaker, affiliation, photo, date, time, langua
 abstract EN/RU, bio EN/RU, Zoom URL, recording URL, slides, minutes. Public fields are written to
 the content repository as `data/talks/<slug>.json` (photo to `photos/`, uploaded documents to
 `files/`) through the GitHub Contents API with `GITHUB_CONTENT_TOKEN`, a fine-grained token limited
-to that repository (Contents: read and write). After every Publish, Save changes, Delete and texts
-save the admin asks GitHub to build the site at once (workflow_dispatch on `SITE_REPO`, the same as
-"Run workflow"), so a change is public in 3–4 minutes; the page says so, or says why not. That uses
-`GITHUB_DISPATCH_TOKEN`: a second fine-grained token, the site repository only, permission
-"Actions: read and write" and nothing else. It can start a build of the code as it stands, not
-change the code. Do not add the site repository to the content token instead: a fine-grained
-token's permissions apply to every repository it covers, so the content token would gain
-Contents write on the code. Without the dispatch token the change still saves and waits for the
-scheduled check, which GitHub may run hours late. "Update the site now" on the programme page
-asks for a build without changing anything.
+to that repository (Contents: read and write); the site rebuilds from the repository within the hour.
 The Zoom and recording URLs go to the encrypted links store, never to GitHub; the public `join` and
 `recording` flags follow what is stored. Uploads are checked by name, size and magic number; a
 stale edit (the file changed meanwhile) is refused with the file's sha, never overwritten.
@@ -173,8 +164,7 @@ secret afterwards. The manual route below gives the same result.
    — three different random 32-byte values, base64 (`tools/keygen.html` in a browser, or
    `openssl rand -base64 32`); `GITHUB_CONTENT_TOKEN` (GitHub → Settings → Developer settings →
    Fine-grained tokens: repository access = the content repository only, permission Contents:
-   read and write, the longest expiry offered; renew it when it expires); `GITHUB_DISPATCH_TOKEN`
-   (a second fine-grained token: the site repository only, permission Actions: read and write); `SMTP2GO_API_KEY`
+   read and write, the longest expiry offered; renew it when it expires); `SMTP2GO_API_KEY`
    and, from a second SMTP2GO API key, `SMTP2GO_API_KEY_AUTH`. Keep offline copies of `DATA_KEY`
    and `INDEX_KEY`: without them the encrypted fields and the address index are gone for good.
    Keys must be secrets, never `[vars]`.

@@ -4,8 +4,6 @@
 # admin.eeeseminar.org, a Cloudflare Worker). The content repository holds no credential and
 # cannot reach this one: this workflow polls it every 10 minutes and deploys when the live site's
 # content-version differs from the repository's latest commit, or on a push here, or on demand.
-# "On demand" is mostly the admin: after every change it asks for a run (workflow_dispatch), because
-# GitHub runs scheduled checks late or drops them when Actions is busy (every ~4 hours, Nov 2026).
 # The live site itself is the record of what is deployed — not a cache.
 #
 # Repository secrets: CLOUDFLARE_API_TOKEN (Workers Scripts, Workers Routes, DNS, this account and zone), CLOUDFLARE_ACCOUNT_ID.
@@ -19,7 +17,7 @@ on:
     branches: [main]
     paths-ignore: [tools/cf-setup.run, tools/cf-dns.json]
   schedule:
-    - cron: "3-59/10 * * * *"   # :03, :13, … — off the top of the hour, when GitHub delays schedules most
+    - cron: "*/10 * * * *"
     # Nightly rebuild at about 03:00 Moscow time (00:07 UTC), even when nothing changed: a seminar
     # that has taken place moves from Upcoming to the Archive without anyone saving anything.
     - cron: "7 0 * * *"
