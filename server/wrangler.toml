@@ -5,9 +5,9 @@
 #   INDEX_KEY          32+ random bytes, base64 — the address index; stable (rotation = reindex, see admin → Maintenance)
 #   DATA_KEY           exactly 32 random bytes, base64 — encryption of addresses, names, affiliations, links, announcements
 #   SMTP2GO_API_KEY    announcements;  SMTP2GO_API_KEY_AUTH (optional) sign-in links
-#   GITHUB_CONTENT_TOKEN  fine-grained token: Contents read/write on the CONTENT repository (the programme editor writes
-#                         there) and Actions read/write on SITE_REPO (after a change the admin asks for a site build)
-#   GITHUB_DISPATCH_TOKEN optional: a separate token with only Actions read/write on SITE_REPO, used instead for the build
+#   GITHUB_CONTENT_TOKEN  fine-grained token for the CONTENT repository only (Contents: read/write) — the programme editor
+#   GITHUB_DISPATCH_TOKEN fine-grained token for SITE_REPO only (Actions: read/write) — after a change the admin asks for a
+#                         site build. Keep it separate: a token's permissions apply to every repository it covers.
 #   INDEX_KEY_PREVIOUS / DATA_KEY_PREVIOUS only during a rotation
 name = "afflux-server"
 main = "src/index.js"
